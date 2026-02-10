@@ -1,0 +1,1369 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Documentação Técnica - SF DevOps Assistant</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500&family=Inter:wght@400;500;600;700&display=swap');
+        
+        :root {
+            --primary: #0176d3;
+            --primary-dark: #014486;
+            --secondary: #1b96ff;
+            --accent: #ff6b35;
+            --bg-dark: #1a1a2e;
+            --bg-code: #0f0f1a;
+            --text: #2e2e3a;
+            --text-light: #5c5c6d;
+            --border: #e5e5e5;
+            --success: #2e844a;
+            --warning: #fe9339;
+            --error: #ea001e;
+        }
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            line-height: 1.7;
+            color: var(--text);
+            background: #fff;
+            font-size: 14px;
+        }
+        
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 40px 50px;
+        }
+        
+        /* Header */
+        .header {
+            text-align: center;
+            padding: 60px 0;
+            background: linear-gradient(135deg, var(--bg-dark) 0%, #16213e 100%);
+            color: white;
+            margin: -40px -50px 40px -50px;
+            border-radius: 0 0 20px 20px;
+        }
+        
+        .header h1 {
+            font-size: 2.5em;
+            font-weight: 700;
+            margin-bottom: 10px;
+        }
+        
+        .header .subtitle {
+            font-size: 1.2em;
+            opacity: 0.9;
+            font-weight: 400;
+        }
+        
+        .header .version {
+            margin-top: 20px;
+            display: inline-block;
+            background: rgba(255,255,255,0.15);
+            padding: 8px 20px;
+            border-radius: 20px;
+            font-size: 0.9em;
+        }
+        
+        /* TOC */
+        .toc {
+            background: #f8f9fa;
+            border-radius: 12px;
+            padding: 30px;
+            margin-bottom: 40px;
+            border: 1px solid var(--border);
+        }
+        
+        .toc h2 {
+            font-size: 1.3em;
+            margin-bottom: 20px;
+            color: var(--primary-dark);
+        }
+        
+        .toc ol {
+            columns: 2;
+            column-gap: 40px;
+        }
+        
+        .toc li {
+            margin-bottom: 8px;
+            break-inside: avoid;
+        }
+        
+        .toc a {
+            color: var(--text);
+            text-decoration: none;
+            transition: color 0.2s;
+        }
+        
+        .toc a:hover {
+            color: var(--primary);
+        }
+        
+        /* Headings */
+        h1, h2, h3, h4, h5 {
+            color: var(--text);
+            margin-top: 40px;
+            margin-bottom: 20px;
+        }
+        
+        h2 {
+            font-size: 1.8em;
+            padding-bottom: 10px;
+            border-bottom: 3px solid var(--primary);
+            color: var(--primary-dark);
+        }
+        
+        h3 {
+            font-size: 1.4em;
+            color: var(--text);
+        }
+        
+        h4 {
+            font-size: 1.15em;
+            color: var(--text-light);
+        }
+        
+        /* Code blocks */
+        pre {
+            background: var(--bg-code);
+            color: #e4e4e7;
+            padding: 20px;
+            border-radius: 10px;
+            overflow-x: auto;
+            font-family: 'JetBrains Mono', 'Fira Code', monospace;
+            font-size: 13px;
+            line-height: 1.6;
+            margin: 20px 0;
+        }
+        
+        code {
+            font-family: 'JetBrains Mono', 'Fira Code', monospace;
+            background: #f1f3f4;
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-size: 0.9em;
+            color: var(--primary-dark);
+        }
+        
+        pre code {
+            background: none;
+            padding: 0;
+            color: inherit;
+        }
+        
+        /* Syntax highlighting */
+        .keyword { color: #c678dd; }
+        .type { color: #e5c07b; }
+        .string { color: #98c379; }
+        .comment { color: #5c6370; font-style: italic; }
+        .function { color: #61afef; }
+        .property { color: #e06c75; }
+        
+        /* Tables */
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 20px 0;
+            font-size: 0.95em;
+        }
+        
+        th, td {
+            padding: 12px 15px;
+            text-align: left;
+            border: 1px solid var(--border);
+        }
+        
+        th {
+            background: var(--primary);
+            color: white;
+            font-weight: 600;
+        }
+        
+        tr:nth-child(even) {
+            background: #f8f9fa;
+        }
+        
+        /* Diagrams */
+        .diagram {
+            background: #1e1e2e;
+            color: #cdd6f4;
+            padding: 25px;
+            border-radius: 12px;
+            overflow-x: auto;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 12px;
+            line-height: 1.4;
+            margin: 25px 0;
+            white-space: pre;
+        }
+        
+        /* Info boxes */
+        .info-box {
+            padding: 20px;
+            border-radius: 10px;
+            margin: 20px 0;
+            border-left: 4px solid;
+        }
+        
+        .info-box.note {
+            background: #e3f2fd;
+            border-color: var(--primary);
+        }
+        
+        .info-box.warning {
+            background: #fff3e0;
+            border-color: var(--warning);
+        }
+        
+        .info-box.tip {
+            background: #e8f5e9;
+            border-color: var(--success);
+        }
+        
+        /* Lists */
+        ul, ol {
+            margin: 15px 0;
+            padding-left: 25px;
+        }
+        
+        li {
+            margin-bottom: 8px;
+        }
+        
+        /* Section */
+        .section {
+            margin-bottom: 50px;
+            page-break-inside: avoid;
+        }
+        
+        /* Page break */
+        .page-break {
+            page-break-after: always;
+        }
+        
+        /* Print styles */
+        @media print {
+            .container {
+                max-width: 100%;
+                padding: 20px;
+            }
+            
+            .header {
+                margin: -20px -20px 30px -20px;
+                padding: 40px;
+            }
+            
+            h2 {
+                page-break-after: avoid;
+            }
+            
+            pre, .diagram {
+                page-break-inside: avoid;
+            }
+            
+            .toc {
+                page-break-after: always;
+            }
+        }
+        
+        /* Footer */
+        .footer {
+            margin-top: 60px;
+            padding-top: 30px;
+            border-top: 1px solid var(--border);
+            text-align: center;
+            color: var(--text-light);
+            font-size: 0.9em;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header class="header">
+            <h1>📦 SF DevOps Assistant</h1>
+            <p class="subtitle">Documentação Técnica Detalhada</p>
+            <span class="version">Versão 1.0.0</span>
+        </header>
+
+        <nav class="toc">
+            <h2>📋 Sumário</h2>
+            <ol>
+                <li><a href="#visao-geral">Visão Geral da Arquitetura</a></li>
+                <li><a href="#estrutura">Estrutura de Diretórios</a></li>
+                <li><a href="#tipos">Tipos e Interfaces</a></li>
+                <li><a href="#utils">Utilitários (Utils)</a></li>
+                <li><a href="#services">Serviços (Services)</a></li>
+                <li><a href="#views">Views (Tree Providers)</a></li>
+                <li><a href="#commands">Comandos (Commands)</a></li>
+                <li><a href="#extension">Ponto de Entrada</a></li>
+                <li><a href="#config">Configurações</a></li>
+                <li><a href="#fluxos">Fluxos de Trabalho</a></li>
+            </ol>
+        </nav>
+
+        <!-- Section 1 -->
+        <section class="section" id="visao-geral">
+            <h2>1. Visão Geral da Arquitetura</h2>
+            
+            <p>A extensão SF DevOps Assistant segue uma arquitetura modular em camadas, separando responsabilidades de forma clara:</p>
+            
+            <div class="diagram">
+┌─────────────────────────────────────────────────────────────┐
+│                      VS Code Extension                       │
+├─────────────────────────────────────────────────────────────┤
+│  Commands Layer (Handlers de interação do usuário)          │
+│  ├── authCommands.ts                                        │
+│  ├── metadataCommands.ts                                    │
+│  ├── deployCommands.ts                                      │
+│  ├── diffCommands.ts                                        │
+│  └── auditCommands.ts                                       │
+├─────────────────────────────────────────────────────────────┤
+│  Views Layer (Interface gráfica - Tree Views)               │
+│  ├── connectionTreeProvider.ts                              │
+│  ├── metadataTreeProvider.ts                                │
+│  ├── deploySelectionTreeProvider.ts                         │
+│  └── auditTreeProvider.ts                                   │
+├─────────────────────────────────────────────────────────────┤
+│  Services Layer (Lógica de negócio)                         │
+│  ├── sfdxService.ts                                         │
+│  ├── metadataService.ts                                     │
+│  ├── deployService.ts                                       │
+│  ├── diffService.ts                                         │
+│  └── auditService.ts                                        │
+├─────────────────────────────────────────────────────────────┤
+│  Utils Layer (Utilitários compartilhados)                   │
+│  ├── logger.ts                                              │
+│  ├── config.ts                                              │
+│  ├── xmlBuilder.ts                                          │
+│  └── fileUtils.ts                                           │
+├─────────────────────────────────────────────────────────────┤
+│  Types Layer (Definições de tipos TypeScript)               │
+│  └── index.ts                                               │
+└─────────────────────────────────────────────────────────────┘
+                              │
+                              ▼
+┌─────────────────────────────────────────────────────────────┐
+│                     Salesforce CLI                           │
+│                  (Execução de comandos sf/sfdx)              │
+└─────────────────────────────────────────────────────────────┘
+                              │
+                              ▼
+┌─────────────────────────────────────────────────────────────┐
+│                     Salesforce Orgs                          │
+│              (APIs: Metadata, Tooling, SOQL)                 │
+└─────────────────────────────────────────────────────────────┘
+            </div>
+
+            <h3>Padrões de Design Utilizados</h3>
+            <ul>
+                <li><strong>Singleton Pattern:</strong> Todos os serviços utilizam o padrão Singleton para garantir uma única instância.</li>
+                <li><strong>Observer Pattern:</strong> Tree Providers utilizam eventos para notificar mudanças na UI.</li>
+                <li><strong>Facade Pattern:</strong> Services encapsulam a complexidade das APIs Salesforce.</li>
+                <li><strong>Factory Pattern:</strong> XML Builder cria estruturas XML de diferentes tipos de metadados.</li>
+            </ul>
+        </section>
+
+        <div class="page-break"></div>
+
+        <!-- Section 2 -->
+        <section class="section" id="estrutura">
+            <h2>2. Estrutura de Diretórios</h2>
+            
+            <pre><code>src/
+├── types/
+│   └── index.ts              # Todas as interfaces e tipos TypeScript
+├── utils/
+│   ├── index.ts              # Exportações dos utilitários
+│   ├── logger.ts             # Sistema de logging
+│   ├── config.ts             # Gerenciador de configurações
+│   ├── xmlBuilder.ts         # Construtor de XML Salesforce
+│   └── fileUtils.ts          # Operações de sistema de arquivos
+├── services/
+│   ├── index.ts              # Exportações dos serviços
+│   ├── sfdxService.ts        # Integração com Salesforce CLI
+│   ├── metadataService.ts    # Leitura de metadados via SOQL
+│   ├── deployService.ts      # Montagem de pacotes de deploy
+│   ├── diffService.ts        # Comparação de metadados
+│   └── auditService.ts       # Auditoria e rastreabilidade
+├── views/
+│   ├── index.ts              # Exportações das views
+│   ├── connectionTreeProvider.ts      # Tree View de conexão
+│   ├── metadataTreeProvider.ts        # Tree View de metadados
+│   ├── deploySelectionTreeProvider.ts # Tree View de seleção
+│   └── auditTreeProvider.ts           # Tree View de auditoria
+├── commands/
+│   ├── index.ts              # Exportações dos comandos
+│   ├── authCommands.ts       # Comandos de autenticação
+│   ├── metadataCommands.ts   # Comandos de metadados
+│   ├── deployCommands.ts     # Comandos de deploy
+│   ├── diffCommands.ts       # Comandos de diff
+│   └── auditCommands.ts      # Comandos de auditoria
+└── extension.ts              # Ponto de entrada da extensão</code></pre>
+        </section>
+
+        <!-- Section 3 -->
+        <section class="section" id="tipos">
+            <h2>3. Tipos e Interfaces</h2>
+            
+            <h3>3.1 Tipos de Conexão e Org</h3>
+            
+            <pre><code><span class="keyword">interface</span> <span class="type">OrgInfo</span> {
+    <span class="property">alias</span>?: <span class="type">string</span>;           <span class="comment">// Alias da org (ex: "DevSandbox")</span>
+    <span class="property">username</span>: <span class="type">string</span>;         <span class="comment">// Username do usuário (ex: "user@org.com")</span>
+    <span class="property">orgId</span>: <span class="type">string</span>;            <span class="comment">// ID único da org (18 caracteres)</span>
+    <span class="property">instanceUrl</span>: <span class="type">string</span>;      <span class="comment">// URL da instância</span>
+    <span class="property">accessToken</span>?: <span class="type">string</span>;     <span class="comment">// Token de acesso OAuth</span>
+    <span class="property">isDefault</span>: <span class="type">boolean</span>;       <span class="comment">// Se é a org padrão do projeto</span>
+    <span class="property">isSandbox</span>: <span class="type">boolean</span>;       <span class="comment">// Se é uma sandbox</span>
+    <span class="property">connectedStatus</span>: <span class="string">'Connected'</span> | <span class="string">'Disconnected'</span> | <span class="string">'Unknown'</span>;
+}</code></pre>
+
+            <p><strong>Uso:</strong> Representa informações de uma org Salesforce autenticada.</p>
+
+            <h3>3.2 Tipos de Metadados</h3>
+            
+            <pre><code><span class="keyword">type</span> <span class="type">MetadataType</span> = 
+    | <span class="string">'PermissionSet'</span>
+    | <span class="string">'Profile'</span>
+    | <span class="string">'CustomObject'</span>
+    | <span class="string">'CustomField'</span>
+    | <span class="string">'ApexClass'</span>
+    | <span class="string">'ApexTrigger'</span>
+    | <span class="string">'Flow'</span>
+    | <span class="string">'Layout'</span>
+    | <span class="string">'RecordType'</span>
+    | <span class="string">'ValidationRule'</span>
+    | <span class="string">'WorkflowRule'</span>;</code></pre>
+
+            <h3>3.3 Interface MetadataComponent</h3>
+            
+            <pre><code><span class="keyword">interface</span> <span class="type">MetadataComponent</span> {
+    <span class="property">id</span>?: <span class="type">string</span>;                    <span class="comment">// ID do registro no Salesforce</span>
+    <span class="property">fullName</span>: <span class="type">string</span>;               <span class="comment">// Nome da API (ex: "Account")</span>
+    <span class="property">type</span>: <span class="type">MetadataType</span>;             <span class="comment">// Tipo do metadado</span>
+    <span class="property">label</span>?: <span class="type">string</span>;                 <span class="comment">// Label amigável</span>
+    <span class="property">description</span>?: <span class="type">string</span>;           <span class="comment">// Descrição</span>
+    <span class="property">lastModifiedDate</span>?: <span class="type">Date</span>;        <span class="comment">// Data da última modificação</span>
+    <span class="property">lastModifiedBy</span>?: <span class="type">string</span>;        <span class="comment">// Usuário que modificou</span>
+    <span class="property">createdDate</span>?: <span class="type">Date</span>;             <span class="comment">// Data de criação</span>
+    <span class="property">createdBy</span>?: <span class="type">string</span>;             <span class="comment">// Usuário que criou</span>
+}</code></pre>
+
+            <h3>3.4 Permission Set (Detalhado)</h3>
+            
+            <pre><code><span class="keyword">interface</span> <span class="type">PermissionSet</span> <span class="keyword">extends</span> <span class="type">MetadataComponent</span> {
+    <span class="property">type</span>: <span class="string">'PermissionSet'</span>;
+    <span class="property">license</span>?: <span class="type">string</span>;                           <span class="comment">// Licença associada</span>
+    <span class="property">hasActivationRequired</span>?: <span class="type">boolean</span>;            <span class="comment">// Requer ativação</span>
+    <span class="property">isCustom</span>: <span class="type">boolean</span>;                          <span class="comment">// Se é customizado</span>
+    <span class="property">objectPermissions</span>: <span class="type">ObjectPermission</span>[];      <span class="comment">// Permissões de objetos</span>
+    <span class="property">fieldPermissions</span>: <span class="type">FieldPermission</span>[];        <span class="comment">// Permissões de campos</span>
+    <span class="property">classAccesses</span>: <span class="type">ClassAccess</span>[];               <span class="comment">// Acesso a classes Apex</span>
+    <span class="property">userPermissions</span>: <span class="type">UserPermission</span>[];          <span class="comment">// Permissões de usuário</span>
+    <span class="property">tabSettings</span>: <span class="type">TabSetting</span>[];                  <span class="comment">// Configurações de tabs</span>
+    <span class="property">recordTypeVisibilities</span>: <span class="type">RecordTypeVisibility</span>[]; <span class="comment">// Record Types</span>
+}</code></pre>
+
+            <h3>3.5 Tipos de Permissões</h3>
+            
+            <pre><code><span class="keyword">interface</span> <span class="type">ObjectPermission</span> {
+    <span class="property">object</span>: <span class="type">string</span>;              <span class="comment">// Nome do objeto (ex: "Account")</span>
+    <span class="property">allowCreate</span>: <span class="type">boolean</span>;        <span class="comment">// Permissão de criar</span>
+    <span class="property">allowRead</span>: <span class="type">boolean</span>;          <span class="comment">// Permissão de ler</span>
+    <span class="property">allowEdit</span>: <span class="type">boolean</span>;          <span class="comment">// Permissão de editar</span>
+    <span class="property">allowDelete</span>: <span class="type">boolean</span>;        <span class="comment">// Permissão de deletar</span>
+    <span class="property">viewAllRecords</span>: <span class="type">boolean</span>;     <span class="comment">// Ver todos os registros</span>
+    <span class="property">modifyAllRecords</span>: <span class="type">boolean</span>;   <span class="comment">// Modificar todos os registros</span>
+}
+
+<span class="keyword">interface</span> <span class="type">FieldPermission</span> {
+    <span class="property">field</span>: <span class="type">string</span>;               <span class="comment">// Campo (ex: "Account.Industry")</span>
+    <span class="property">readable</span>: <span class="type">boolean</span>;           <span class="comment">// Pode ler</span>
+    <span class="property">editable</span>: <span class="type">boolean</span>;           <span class="comment">// Pode editar</span>
+}
+
+<span class="keyword">interface</span> <span class="type">ClassAccess</span> {
+    <span class="property">apexClass</span>: <span class="type">string</span>;           <span class="comment">// Nome da classe Apex</span>
+    <span class="property">enabled</span>: <span class="type">boolean</span>;            <span class="comment">// Acesso habilitado</span>
+}</code></pre>
+
+            <h3>3.6 Tipos de Deploy</h3>
+            
+            <pre><code><span class="keyword">interface</span> <span class="type">DeploySelection</span> {
+    <span class="property">id</span>: <span class="type">string</span>;                  <span class="comment">// ID único da seleção</span>
+    <span class="property">items</span>: <span class="type">DeployItem</span>[];         <span class="comment">// Itens selecionados</span>
+    <span class="property">createdAt</span>: <span class="type">Date</span>;             <span class="comment">// Data de criação</span>
+    <span class="property">updatedAt</span>: <span class="type">Date</span>;             <span class="comment">// Última atualização</span>
+    <span class="property">sourceOrg</span>?: <span class="type">string</span>;          <span class="comment">// Org de origem</span>
+    <span class="property">targetOrg</span>?: <span class="type">string</span>;          <span class="comment">// Org de destino</span>
+}
+
+<span class="keyword">interface</span> <span class="type">DeployItem</span> {
+    <span class="property">id</span>: <span class="type">string</span>;                  <span class="comment">// ID único do item</span>
+    <span class="property">component</span>: <span class="type">MetadataComponent</span>; <span class="comment">// Componente de metadado</span>
+    <span class="property">includeRelated</span>: <span class="type">boolean</span>;     <span class="comment">// Incluir relacionados</span>
+    <span class="property">relatedItems</span>?: <span class="type">DeployItem</span>[]; <span class="comment">// Itens relacionados</span>
+    <span class="property">action</span>: <span class="string">'add'</span> | <span class="string">'update'</span> | <span class="string">'delete'</span>; <span class="comment">// Ação do deploy</span>
+}
+
+<span class="keyword">interface</span> <span class="type">DeployPackage</span> {
+    <span class="property">packageXml</span>: <span class="type">string</span>;                    <span class="comment">// Conteúdo do package.xml</span>
+    <span class="property">destructiveChangesXml</span>?: <span class="type">string</span>;        <span class="comment">// destructiveChanges.xml</span>
+    <span class="property">metadataFiles</span>: <span class="type">MetadataFile</span>[];         <span class="comment">// Arquivos de metadados</span>
+    <span class="property">manifest</span>: <span class="type">PackageManifest</span>;             <span class="comment">// Manifest estruturado</span>
+    <span class="property">generatedAt</span>: <span class="type">Date</span>;                     <span class="comment">// Data de geração</span>
+    <span class="property">generatedBy</span>: <span class="type">string</span>;                   <span class="comment">// Usuário que gerou</span>
+    <span class="property">sourceOrg</span>: <span class="type">string</span>;                     <span class="comment">// Org de origem</span>
+    <span class="property">targetOrg</span>?: <span class="type">string</span>;                    <span class="comment">// Org de destino</span>
+}</code></pre>
+
+            <h3>3.7 Tipos de Diff</h3>
+            
+            <pre><code><span class="keyword">interface</span> <span class="type">DiffResult</span> {
+    <span class="property">source</span>: <span class="type">DiffSource</span>;              <span class="comment">// Fonte da comparação</span>
+    <span class="property">target</span>: <span class="type">DiffSource</span>;              <span class="comment">// Destino da comparação</span>
+    <span class="property">componentType</span>: <span class="type">MetadataType</span>;     <span class="comment">// Tipo comparado</span>
+    <span class="property">differences</span>: <span class="type">DiffItem</span>[];         <span class="comment">// Lista de diferenças</span>
+    <span class="property">summary</span>: <span class="type">DiffSummary</span>;            <span class="comment">// Resumo</span>
+    <span class="property">generatedAt</span>: <span class="type">Date</span>;               <span class="comment">// Data da geração</span>
+}
+
+<span class="keyword">interface</span> <span class="type">DiffSummary</span> {
+    <span class="property">totalComponents</span>: <span class="type">number</span>;         <span class="comment">// Total de componentes</span>
+    <span class="property">added</span>: <span class="type">number</span>;                   <span class="comment">// Quantidade adicionada</span>
+    <span class="property">removed</span>: <span class="type">number</span>;                 <span class="comment">// Quantidade removida</span>
+    <span class="property">modified</span>: <span class="type">number</span>;                <span class="comment">// Quantidade modificada</span>
+    <span class="property">unchanged</span>: <span class="type">number</span>;               <span class="comment">// Quantidade inalterada</span>
+}</code></pre>
+
+            <h3>3.8 Tipos de Auditoria</h3>
+            
+            <pre><code><span class="keyword">interface</span> <span class="type">AuditEntry</span> {
+    <span class="property">id</span>: <span class="type">string</span>;                      <span class="comment">// ID único da entrada</span>
+    <span class="property">timestamp</span>: <span class="type">Date</span>;                 <span class="comment">// Data/hora da ação</span>
+    <span class="property">action</span>: <span class="type">AuditAction</span>;             <span class="comment">// Tipo de ação</span>
+    <span class="property">user</span>: <span class="type">string</span>;                    <span class="comment">// Usuário responsável</span>
+    <span class="property">sourceOrg</span>?: <span class="type">string</span>;              <span class="comment">// Org de origem</span>
+    <span class="property">targetOrg</span>?: <span class="type">string</span>;              <span class="comment">// Org de destino</span>
+    <span class="property">details</span>: <span class="type">AuditDetails</span>;           <span class="comment">// Detalhes adicionais</span>
+}
+
+<span class="keyword">type</span> <span class="type">AuditAction</span> = 
+    | <span class="string">'PACKAGE_CREATED'</span>              <span class="comment">// Pacote criado</span>
+    | <span class="string">'PACKAGE_EXPORTED'</span>             <span class="comment">// Pacote exportado</span>
+    | <span class="string">'DIFF_EXECUTED'</span>                <span class="comment">// Diff executado</span>
+    | <span class="string">'METADATA_RETRIEVED'</span>           <span class="comment">// Metadados recuperados</span>
+    | <span class="string">'SELECTION_UPDATED'</span>            <span class="comment">// Seleção atualizada</span>
+    | <span class="string">'ORG_CONNECTED'</span>                <span class="comment">// Org conectada</span>
+    | <span class="string">'ORG_DISCONNECTED'</span>;            <span class="comment">// Org desconectada</span></code></pre>
+
+            <h3>3.9 Resultado de Operação</h3>
+            
+            <pre><code><span class="keyword">interface</span> <span class="type">OperationResult</span>&lt;<span class="type">T</span> = <span class="type">void</span>&gt; {
+    <span class="property">success</span>: <span class="type">boolean</span>;                <span class="comment">// Se a operação foi bem-sucedida</span>
+    <span class="property">data</span>?: <span class="type">T</span>;                        <span class="comment">// Dados retornados (se sucesso)</span>
+    <span class="property">error</span>?: <span class="type">string</span>;                  <span class="comment">// Mensagem de erro (se falha)</span>
+    <span class="property">warnings</span>?: <span class="type">string</span>[];             <span class="comment">// Avisos (mesmo se sucesso)</span>
+}</code></pre>
+            
+            <p><strong>Uso:</strong> Padrão de retorno para todas as operações que podem falhar.</p>
+        </section>
+
+        <div class="page-break"></div>
+
+        <!-- Section 4 -->
+        <section class="section" id="utils">
+            <h2>4. Utilitários (Utils)</h2>
+            
+            <h3>4.1 Logger (<code>src/utils/logger.ts</code>)</h3>
+            <p>Sistema de logging centralizado para a extensão.</p>
+            
+            <pre><code><span class="keyword">class</span> <span class="type">Logger</span> {
+    <span class="keyword">private static</span> instance: <span class="type">Logger</span>;
+    <span class="keyword">private</span> outputChannel: <span class="type">vscode.OutputChannel</span>;
+    
+    <span class="keyword">static</span> <span class="function">getInstance</span>(): <span class="type">Logger</span>;
+    
+    <span class="function">info</span>(message: <span class="type">string</span>, ...args: <span class="type">unknown</span>[]): <span class="type">void</span>;
+    <span class="function">warn</span>(message: <span class="type">string</span>, ...args: <span class="type">unknown</span>[]): <span class="type">void</span>;
+    <span class="function">error</span>(message: <span class="type">string</span>, error?: <span class="type">Error</span> | <span class="type">unknown</span>): <span class="type">void</span>;
+    <span class="function">debug</span>(message: <span class="type">string</span>, ...args: <span class="type">unknown</span>[]): <span class="type">void</span>;
+    
+    <span class="function">show</span>(): <span class="type">void</span>;      <span class="comment">// Mostra o Output Channel</span>
+    <span class="function">clear</span>(): <span class="type">void</span>;     <span class="comment">// Limpa o Output Channel</span>
+    <span class="function">dispose</span>(): <span class="type">void</span>;   <span class="comment">// Libera recursos</span>
+}</code></pre>
+
+            <p><strong>Formato de saída:</strong></p>
+            <pre><code>2024-01-15T10:30:45.123Z [SF DevOps] [INFO] Operação iniciada
+2024-01-15T10:30:45.456Z [SF DevOps] [ERROR] Falha na operação
+Stack: Error: Detalhes do erro</code></pre>
+
+            <h3>4.2 Config Manager (<code>src/utils/config.ts</code>)</h3>
+            <p>Gerenciador de configurações da extensão.</p>
+            
+            <table>
+                <tr>
+                    <th>Chave</th>
+                    <th>Tipo</th>
+                    <th>Padrão</th>
+                    <th>Descrição</th>
+                </tr>
+                <tr>
+                    <td><code>defaultOrg</code></td>
+                    <td>string</td>
+                    <td><code>""</code></td>
+                    <td>Alias da org padrão</td>
+                </tr>
+                <tr>
+                    <td><code>outputDirectory</code></td>
+                    <td>string</td>
+                    <td><code>"./deploy-packages"</code></td>
+                    <td>Diretório para pacotes</td>
+                </tr>
+                <tr>
+                    <td><code>enableAuditLog</code></td>
+                    <td>boolean</td>
+                    <td><code>true</code></td>
+                    <td>Habilitar auditoria</td>
+                </tr>
+                <tr>
+                    <td><code>auditLogPath</code></td>
+                    <td>string</td>
+                    <td><code>"./.sfdevops/audit.log"</code></td>
+                    <td>Caminho do log</td>
+                </tr>
+                <tr>
+                    <td><code>autoGenerateCommitMessage</code></td>
+                    <td>boolean</td>
+                    <td><code>true</code></td>
+                    <td>Gerar mensagem de commit</td>
+                </tr>
+                <tr>
+                    <td><code>metadataApiVersion</code></td>
+                    <td>string</td>
+                    <td><code>"59.0"</code></td>
+                    <td>Versão da API</td>
+                </tr>
+            </table>
+
+            <h3>4.3 XML Builder (<code>src/utils/xmlBuilder.ts</code>)</h3>
+            <p>Utilitário para construção e parsing de XML no formato Salesforce.</p>
+            
+            <pre><code><span class="keyword">class</span> <span class="type">XmlBuilderUtil</span> {
+    <span class="comment">// Geração de XMLs</span>
+    <span class="function">generatePackageXml</span>(manifest: <span class="type">PackageManifest</span>): <span class="type">string</span>;
+    <span class="function">generateDestructiveChangesXml</span>(manifest: <span class="type">PackageManifest</span>): <span class="type">string</span>;
+    <span class="function">generatePermissionSetXml</span>(permissionSet: <span class="type">PermissionSet</span>): <span class="type">string</span>;
+    <span class="function">generateProfileXml</span>(profile: <span class="type">Profile</span>): <span class="type">string</span>;
+    
+    <span class="comment">// Parsing e validação</span>
+    <span class="function">parseXml</span>&lt;<span class="type">T</span>&gt;(xml: <span class="type">string</span>): <span class="type">T</span>;
+    <span class="function">validateXml</span>(xml: <span class="type">string</span>): { valid: <span class="type">boolean</span>; error?: <span class="type">string</span> };
+    <span class="function">formatXml</span>(xml: <span class="type">string</span>): <span class="type">string</span>;
+    
+    <span class="comment">// Criação de manifest</span>
+    <span class="function">createManifest</span>(types: <span class="type">Map</span>&lt;<span class="type">MetadataType</span>, <span class="type">string</span>[]&gt;, version: <span class="type">string</span>): <span class="type">PackageManifest</span>;
+}</code></pre>
+
+            <h3>4.4 File Utils (<code>src/utils/fileUtils.ts</code>)</h3>
+            <p>Utilitários para operações de sistema de arquivos.</p>
+            
+            <pre><code><span class="keyword">class</span> <span class="type">FileUtils</span> {
+    <span class="comment">// Operações de arquivo</span>
+    <span class="keyword">static async</span> <span class="function">writeFile</span>(filePath: <span class="type">string</span>, content: <span class="type">string</span>): <span class="type">Promise</span>&lt;<span class="type">void</span>&gt;;
+    <span class="keyword">static async</span> <span class="function">readFile</span>(filePath: <span class="type">string</span>): <span class="type">Promise</span>&lt;<span class="type">string</span>&gt;;
+    <span class="keyword">static async</span> <span class="function">fileExists</span>(filePath: <span class="type">string</span>): <span class="type">Promise</span>&lt;<span class="type">boolean</span>&gt;;
+    <span class="keyword">static async</span> <span class="function">deleteFile</span>(filePath: <span class="type">string</span>): <span class="type">Promise</span>&lt;<span class="type">void</span>&gt;;
+    
+    <span class="comment">// Operações de diretório</span>
+    <span class="keyword">static async</span> <span class="function">ensureDirectory</span>(dirPath: <span class="type">string</span>): <span class="type">Promise</span>&lt;<span class="type">void</span>&gt;;
+    <span class="keyword">static async</span> <span class="function">listFiles</span>(dirPath: <span class="type">string</span>): <span class="type">Promise</span>&lt;<span class="type">string</span>[]&gt;;
+    
+    <span class="comment">// Utilitários</span>
+    <span class="keyword">static</span> <span class="function">getWorkspacePath</span>(): <span class="type">string</span> | <span class="type">undefined</span>;
+    <span class="keyword">static</span> <span class="function">generateTimestampedFilename</span>(baseName: <span class="type">string</span>, ext: <span class="type">string</span>): <span class="type">string</span>;
+}</code></pre>
+        </section>
+
+        <div class="page-break"></div>
+
+        <!-- Section 5 -->
+        <section class="section" id="services">
+            <h2>5. Serviços (Services)</h2>
+            
+            <h3>5.1 SFDX Service (<code>src/services/sfdxService.ts</code>)</h3>
+            <p>Serviço de integração com o Salesforce CLI.</p>
+            
+            <pre><code><span class="keyword">class</span> <span class="type">SfdxService</span> {
+    <span class="keyword">private static</span> instance: <span class="type">SfdxService</span>;
+    <span class="keyword">private</span> currentOrg: <span class="type">OrgInfo</span> | <span class="type">null</span> = <span class="keyword">null</span>;
+    
+    <span class="comment">// Verificação de instalação</span>
+    <span class="function">checkSfdxInstallation</span>(): <span class="type">Promise</span>&lt;<span class="type">boolean</span>&gt;;
+    
+    <span class="comment">// Gerenciamento de orgs</span>
+    <span class="function">listOrgs</span>(): <span class="type">Promise</span>&lt;<span class="type">OperationResult</span>&lt;<span class="type">OrgInfo</span>[]&gt;&gt;;
+    <span class="function">getOrgInfo</span>(aliasOrUsername: <span class="type">string</span>): <span class="type">Promise</span>&lt;<span class="type">OperationResult</span>&lt;<span class="type">OrgInfo</span>&gt;&gt;;
+    <span class="function">getDefaultOrg</span>(): <span class="type">Promise</span>&lt;<span class="type">OperationResult</span>&lt;<span class="type">OrgInfo</span>&gt;&gt;;
+    <span class="function">setCurrentOrg</span>(aliasOrUsername: <span class="type">string</span>): <span class="type">Promise</span>&lt;<span class="type">AuthResult</span>&gt;;
+    <span class="function">getCurrentOrg</span>(): <span class="type">OrgInfo</span> | <span class="type">null</span>;
+    
+    <span class="comment">// Utilitários</span>
+    <span class="function">validateOrgPermissions</span>(): <span class="type">Promise</span>&lt;<span class="type">OperationResult</span>&lt;<span class="type">boolean</span>&gt;&gt;;
+    <span class="function">openOrg</span>(aliasOrUsername?: <span class="type">string</span>): <span class="type">Promise</span>&lt;<span class="type">OperationResult</span>&lt;<span class="type">void</span>&gt;&gt;;
+}</code></pre>
+
+            <h4>Comandos SFDX Utilizados</h4>
+            <table>
+                <tr>
+                    <th>Método</th>
+                    <th>Comando SFDX</th>
+                </tr>
+                <tr>
+                    <td><code>checkSfdxInstallation</code></td>
+                    <td><code>sf --version</code></td>
+                </tr>
+                <tr>
+                    <td><code>listOrgs</code></td>
+                    <td><code>sf org list --json</code></td>
+                </tr>
+                <tr>
+                    <td><code>getOrgInfo</code></td>
+                    <td><code>sf org display --target-org &lt;alias&gt; --json</code></td>
+                </tr>
+                <tr>
+                    <td><code>validateOrgPermissions</code></td>
+                    <td><code>sf data query --query "SELECT Id FROM Organization"</code></td>
+                </tr>
+            </table>
+
+            <h3>5.2 Metadata Service (<code>src/services/metadataService.ts</code>)</h3>
+            <p>Serviço de leitura de metadados da org Salesforce.</p>
+            
+            <pre><code><span class="keyword">class</span> <span class="type">MetadataService</span> {
+    <span class="comment">// Cache de metadados</span>
+    <span class="keyword">private</span> permissionSetsCache: <span class="type">PermissionSet</span>[] = [];
+    <span class="keyword">private</span> profilesCache: <span class="type">Profile</span>[] = [];
+    <span class="keyword">private</span> objectsCache: <span class="type">CustomObject</span>[] = [];
+    <span class="keyword">private</span> apexClassesCache: <span class="type">ApexClass</span>[] = [];
+    <span class="keyword">private</span> flowsCache: <span class="type">Flow</span>[] = [];
+    
+    <span class="comment">// Permission Sets</span>
+    <span class="function">listPermissionSets</span>(forceRefresh?: <span class="type">boolean</span>): <span class="type">Promise</span>&lt;<span class="type">OperationResult</span>&lt;<span class="type">PermissionSet</span>[]&gt;&gt;;
+    <span class="function">getPermissionSetDetails</span>(id: <span class="type">string</span>): <span class="type">Promise</span>&lt;<span class="type">OperationResult</span>&lt;<span class="type">PermissionSet</span>&gt;&gt;;
+    
+    <span class="comment">// Profiles, Objects, Classes, Flows...</span>
+    <span class="function">listProfiles</span>(forceRefresh?: <span class="type">boolean</span>): <span class="type">Promise</span>&lt;<span class="type">OperationResult</span>&lt;<span class="type">Profile</span>[]&gt;&gt;;
+    <span class="function">listCustomObjects</span>(forceRefresh?: <span class="type">boolean</span>): <span class="type">Promise</span>&lt;<span class="type">OperationResult</span>&lt;<span class="type">CustomObject</span>[]&gt;&gt;;
+    <span class="function">listApexClasses</span>(forceRefresh?: <span class="type">boolean</span>): <span class="type">Promise</span>&lt;<span class="type">OperationResult</span>&lt;<span class="type">ApexClass</span>[]&gt;&gt;;
+    <span class="function">listFlows</span>(forceRefresh?: <span class="type">boolean</span>): <span class="type">Promise</span>&lt;<span class="type">OperationResult</span>&lt;<span class="type">Flow</span>[]&gt;&gt;;
+    
+    <span class="comment">// Utilitários</span>
+    <span class="function">clearCache</span>(): <span class="type">void</span>;
+    <span class="function">searchMetadata</span>(searchTerm: <span class="type">string</span>): <span class="type">Promise</span>&lt;<span class="type">MetadataComponent</span>[]&gt;;
+}</code></pre>
+
+            <h4>Queries SOQL - Permission Sets</h4>
+            <pre><code><span class="keyword">SELECT</span> Id, Name, Label, Description, IsCustom, License.Name, 
+       HasActivationRequired, CreatedDate, CreatedBy.Name,
+       LastModifiedDate, LastModifiedBy.Name
+<span class="keyword">FROM</span> PermissionSet 
+<span class="keyword">WHERE</span> IsOwnedByProfile = <span class="keyword">false</span>
+<span class="keyword">ORDER BY</span> Label</code></pre>
+
+            <h4>Queries SOQL - Object Permissions</h4>
+            <pre><code><span class="keyword">SELECT</span> SobjectType, PermissionsCreate, PermissionsRead, PermissionsEdit,
+       PermissionsDelete, PermissionsViewAllRecords, PermissionsModifyAllRecords
+<span class="keyword">FROM</span> ObjectPermissions
+<span class="keyword">WHERE</span> ParentId = <span class="string">'&lt;permissionSetId&gt;'</span></code></pre>
+
+            <h3>5.3 Deploy Service (<code>src/services/deployService.ts</code>)</h3>
+            <p>Serviço para montagem e geração de pacotes de deploy. <strong>Feature central da extensão.</strong></p>
+            
+            <pre><code><span class="keyword">class</span> <span class="type">DeployService</span> {
+    <span class="keyword">private</span> currentSelection: <span class="type">DeploySelection</span>;
+    
+    <span class="comment">// Gerenciamento de seleção</span>
+    <span class="function">getCurrentSelection</span>(): <span class="type">DeploySelection</span>;
+    <span class="function">addToSelection</span>(component: <span class="type">MetadataComponent</span>, includeRelated?: <span class="type">boolean</span>): <span class="type">DeployItem</span>;
+    <span class="function">removeFromSelection</span>(itemId: <span class="type">string</span>): <span class="type">boolean</span>;
+    <span class="function">clearSelection</span>(): <span class="type">void</span>;
+    
+    <span class="comment">// Adição com relacionados</span>
+    <span class="function">addPermissionSetWithRelated</span>(id: <span class="type">string</span>): <span class="type">Promise</span>&lt;<span class="type">OperationResult</span>&lt;<span class="type">DeployItem</span>[]&gt;&gt;;
+    
+    <span class="comment">// Geração de pacotes</span>
+    <span class="function">generatePackageXml</span>(): <span class="type">string</span>;
+    <span class="function">generateDestructiveChangesXml</span>(): <span class="type">string</span> | <span class="type">null</span>;
+    <span class="function">generateDeployPackage</span>(targetOrg?: <span class="type">string</span>): <span class="type">Promise</span>&lt;<span class="type">OperationResult</span>&lt;<span class="type">DeployPackage</span>&gt;&gt;;
+    
+    <span class="comment">// Exportação</span>
+    <span class="function">exportPackage</span>(pkg: <span class="type">DeployPackage</span>, outputDir?: <span class="type">string</span>): <span class="type">Promise</span>&lt;<span class="type">OperationResult</span>&lt;<span class="type">string</span>&gt;&gt;;
+    
+    <span class="comment">// Utilitários</span>
+    <span class="function">generateCommitMessage</span>(): <span class="type">string</span>;
+}</code></pre>
+
+            <h3>5.4 Diff Service (<code>src/services/diffService.ts</code>)</h3>
+            <p>Serviço de comparação de metadados entre ambientes.</p>
+            
+            <pre><code><span class="keyword">class</span> <span class="type">DiffService</span> {
+    <span class="comment">// Comparações</span>
+    <span class="function">diffPermissionSets</span>(
+        sourceOrg: <span class="type">string</span>,
+        targetOrg: <span class="type">string</span>,
+        permissionSetName?: <span class="type">string</span>
+    ): <span class="type">Promise</span>&lt;<span class="type">OperationResult</span>&lt;<span class="type">DiffResult</span>&gt;&gt;;
+    
+    <span class="function">diffPermissionSetDetails</span>(
+        sourceOrg: <span class="type">string</span>,
+        targetOrg: <span class="type">string</span>,
+        permissionSetId: <span class="type">string</span>
+    ): <span class="type">Promise</span>&lt;<span class="type">OperationResult</span>&lt;<span class="type">DiffResult</span>&gt;&gt;;
+    
+    <span class="comment">// Formatação</span>
+    <span class="function">formatDiffResult</span>(result: <span class="type">DiffResult</span>): <span class="type">string</span>;
+}</code></pre>
+
+            <h3>5.5 Audit Service (<code>src/services/auditService.ts</code>)</h3>
+            <p>Serviço de auditoria e rastreabilidade.</p>
+            
+            <pre><code><span class="keyword">class</span> <span class="type">AuditService</span> {
+    <span class="comment">// Logging de ações</span>
+    <span class="function">logPackageCreated</span>(pkg: <span class="type">DeployPackage</span>): <span class="type">Promise</span>&lt;<span class="type">void</span>&gt;;
+    <span class="function">logPackageExported</span>(path: <span class="type">string</span>): <span class="type">Promise</span>&lt;<span class="type">void</span>&gt;;
+    <span class="function">logDiffExecuted</span>(result: <span class="type">DiffResult</span>): <span class="type">Promise</span>&lt;<span class="type">void</span>&gt;;
+    <span class="function">logOrgConnected</span>(orgAlias: <span class="type">string</span>): <span class="type">Promise</span>&lt;<span class="type">void</span>&gt;;
+    
+    <span class="comment">// Consultas</span>
+    <span class="function">getEntries</span>(): <span class="type">AuditEntry</span>[];
+    <span class="function">getRecentEntries</span>(count?: <span class="type">number</span>): <span class="type">AuditEntry</span>[];
+    
+    <span class="comment">// Manutenção</span>
+    <span class="function">clearLog</span>(): <span class="type">Promise</span>&lt;<span class="type">void</span>&gt;;
+    <span class="function">exportLog</span>(outputPath: <span class="type">string</span>): <span class="type">Promise</span>&lt;<span class="type">OperationResult</span>&lt;<span class="type">string</span>&gt;&gt;;
+}</code></pre>
+        </section>
+
+        <div class="page-break"></div>
+
+        <!-- Section 6 -->
+        <section class="section" id="views">
+            <h2>6. Views (Tree Providers)</h2>
+            
+            <h3>6.1 Connection Tree Provider</h3>
+            <p>Exibe informações de conexão com orgs Salesforce.</p>
+            
+            <div class="diagram">
+Conexão
+├── Org Atual
+│   ├── MySandbox (Sandbox)
+│   └── Instance: https://mysandbox.my.salesforce.com
+└── Orgs Disponíveis
+    ├── DevOrg (Sandbox)
+    └── Production (Production)
+            </div>
+
+            <h3>6.2 Metadata Tree Provider</h3>
+            <p>Exibe metadados da org organizado por tipo.</p>
+            
+            <div class="diagram">
+Metadados
+├── Permission Sets
+│   ├── Sales_User
+│   │   ├── API Name: Sales_User
+│   │   ├── License: Salesforce Platform
+│   │   └── Custom: Yes
+│   └── Marketing_Manager
+├── Profiles
+│   ├── System Administrator
+│   └── Standard User
+├── Objetos
+│   ├── Account
+│   └── Contact
+├── Apex Classes
+│   ├── AccountController
+│   └── ContactService
+└── Flows
+    └── Lead_Assignment
+            </div>
+
+            <h3>6.3 Deploy Selection Tree Provider</h3>
+            <p>Exibe os componentes selecionados para deploy.</p>
+            
+            <div class="diagram">
+Seleção de Deploy
+├── Total: 5 componente(s)
+├── Permission Sets (2)
+│   ├── Sales_User (Adicionar)
+│   └── Marketing_Manager (Adicionar)
+├── Objetos (2)
+│   ├── Account (Atualizar)
+│   └── Contact (Adicionar)
+└── Apex Classes (1)
+    └── AccountController (Adicionar)
+            </div>
+
+            <h3>6.4 Audit Tree Provider</h3>
+            <p>Exibe o histórico de operações realizadas.</p>
+            
+            <div class="diagram">
+Auditoria
+├── Hoje (3)
+│   ├── Pacote Criado (10:30)
+│   │   ├── Usuário: gabriel.silva
+│   │   ├── Data/Hora: 15/01/2024 10:30:45
+│   │   ├── Org Origem: DevSandbox
+│   │   └── Componentes: 5
+│   ├── Pacote Exportado (10:31)
+│   └── Org Conectada (09:15)
+├── Ontem (5)
+└── Anteriores (12)
+            </div>
+        </section>
+
+        <div class="page-break"></div>
+
+        <!-- Section 7 -->
+        <section class="section" id="commands">
+            <h2>7. Comandos (Commands)</h2>
+            
+            <h3>7.1 Comandos de Autenticação</h3>
+            <table>
+                <tr>
+                    <th>Comando</th>
+                    <th>ID</th>
+                    <th>Descrição</th>
+                </tr>
+                <tr>
+                    <td>Conectar à Org</td>
+                    <td><code>sfdevops.authenticate</code></td>
+                    <td>Verifica conexão e valida permissões</td>
+                </tr>
+                <tr>
+                    <td>Selecionar Org</td>
+                    <td><code>sfdevops.selectOrg</code></td>
+                    <td>Alterna entre orgs autenticadas</td>
+                </tr>
+            </table>
+
+            <h3>7.2 Comandos de Metadados</h3>
+            <table>
+                <tr>
+                    <th>Comando</th>
+                    <th>ID</th>
+                    <th>Descrição</th>
+                </tr>
+                <tr>
+                    <td>Atualizar Metadados</td>
+                    <td><code>sfdevops.refreshMetadata</code></td>
+                    <td>Recarrega todos os metadados</td>
+                </tr>
+                <tr>
+                    <td>Ver Permission Sets</td>
+                    <td><code>sfdevops.viewPermissionSets</code></td>
+                    <td>Lista Permission Sets</td>
+                </tr>
+                <tr>
+                    <td>Ver Profiles</td>
+                    <td><code>sfdevops.viewProfiles</code></td>
+                    <td>Lista Profiles</td>
+                </tr>
+                <tr>
+                    <td>Ver Objetos</td>
+                    <td><code>sfdevops.viewObjects</code></td>
+                    <td>Lista objetos</td>
+                </tr>
+                <tr>
+                    <td>Ver Apex Classes</td>
+                    <td><code>sfdevops.viewApexClasses</code></td>
+                    <td>Lista classes Apex</td>
+                </tr>
+                <tr>
+                    <td>Ver Flows</td>
+                    <td><code>sfdevops.viewFlows</code></td>
+                    <td>Lista Flows</td>
+                </tr>
+                <tr>
+                    <td>Adicionar ao Deploy</td>
+                    <td><code>sfdevops.addToDeploySelection</code></td>
+                    <td>Adiciona componente à seleção</td>
+                </tr>
+            </table>
+
+            <h3>7.3 Comandos de Deploy</h3>
+            <table>
+                <tr>
+                    <th>Comando</th>
+                    <th>ID</th>
+                    <th>Descrição</th>
+                </tr>
+                <tr>
+                    <td>Criar Pacote de Deploy</td>
+                    <td><code>sfdevops.createDeployPackage</code></td>
+                    <td>Gera pacote completo</td>
+                </tr>
+                <tr>
+                    <td>Montagem Assistida</td>
+                    <td><code>sfdevops.assistedDeploy</code></td>
+                    <td>Wizard de montagem</td>
+                </tr>
+                <tr>
+                    <td>Remover do Deploy</td>
+                    <td><code>sfdevops.removeFromDeploySelection</code></td>
+                    <td>Remove item da seleção</td>
+                </tr>
+                <tr>
+                    <td>Limpar Seleção</td>
+                    <td><code>sfdevops.clearDeploySelection</code></td>
+                    <td>Remove todos os itens</td>
+                </tr>
+                <tr>
+                    <td>Gerar package.xml</td>
+                    <td><code>sfdevops.generatePackageXml</code></td>
+                    <td>Gera apenas o manifest</td>
+                </tr>
+                <tr>
+                    <td>Gerar Mensagem Commit</td>
+                    <td><code>sfdevops.generateCommitMessage</code></td>
+                    <td>Sugere mensagem de commit</td>
+                </tr>
+            </table>
+
+            <h3>7.4 Comandos de Diff</h3>
+            <table>
+                <tr>
+                    <th>Comando</th>
+                    <th>ID</th>
+                    <th>Descrição</th>
+                </tr>
+                <tr>
+                    <td>Comparar Metadados</td>
+                    <td><code>sfdevops.diffMetadata</code></td>
+                    <td>Menu principal de diff</td>
+                </tr>
+                <tr>
+                    <td>Diff Local vs Org</td>
+                    <td><code>sfdevops.diffLocalVsOrg</code></td>
+                    <td>Compara local com org</td>
+                </tr>
+                <tr>
+                    <td>Diff Org vs Org</td>
+                    <td><code>sfdevops.diffOrgVsOrg</code></td>
+                    <td>Compara duas orgs</td>
+                </tr>
+            </table>
+
+            <h3>7.5 Comandos de Auditoria</h3>
+            <table>
+                <tr>
+                    <th>Comando</th>
+                    <th>ID</th>
+                    <th>Descrição</th>
+                </tr>
+                <tr>
+                    <td>Ver Log de Auditoria</td>
+                    <td><code>sfdevops.viewAuditLog</code></td>
+                    <td>Exibe/exporta/limpa log</td>
+                </tr>
+            </table>
+        </section>
+
+        <div class="page-break"></div>
+
+        <!-- Section 8 -->
+        <section class="section" id="extension">
+            <h2>8. Ponto de Entrada (Extension)</h2>
+            
+            <h3>Função <code>activate</code></h3>
+            <p>Chamada quando a extensão é ativada. Responsável por:</p>
+            
+            <ol>
+                <li><strong>Inicializar serviços</strong> - Inicializa o AuditService para carregar log existente</li>
+                <li><strong>Criar Tree Providers</strong> - ConnectionTreeProvider, MetadataTreeProvider, DeploySelectionTreeProvider, AuditTreeProvider</li>
+                <li><strong>Registrar Tree Views</strong> - sfdevops-connection, sfdevops-metadata, sfdevops-deploy-selection, sfdevops-audit</li>
+                <li><strong>Criar e registrar comandos</strong> - AuthCommands, MetadataCommands, DeployCommands, DiffCommands, AuditCommands</li>
+                <li><strong>Verificar instalação do SF CLI</strong></li>
+                <li><strong>Carregar org padrão automaticamente</strong></li>
+            </ol>
+
+            <h3>Eventos de Ativação</h3>
+            <pre><code>{
+  <span class="string">"activationEvents"</span>: [
+    <span class="string">"workspaceContains:sfdx-project.json"</span>,
+    <span class="string">"onCommand:sfdevops.authenticate"</span>
+  ]
+}</code></pre>
+        </section>
+
+        <!-- Section 9 -->
+        <section class="section" id="config">
+            <h2>9. Configurações da Extensão</h2>
+            
+            <table>
+                <tr>
+                    <th>Configuração</th>
+                    <th>Tipo</th>
+                    <th>Padrão</th>
+                    <th>Descrição</th>
+                </tr>
+                <tr>
+                    <td><code>sfdevops.defaultOrg</code></td>
+                    <td>string</td>
+                    <td><code>""</code></td>
+                    <td>Alias ou username da org padrão</td>
+                </tr>
+                <tr>
+                    <td><code>sfdevops.outputDirectory</code></td>
+                    <td>string</td>
+                    <td><code>"./deploy-packages"</code></td>
+                    <td>Diretório para geração de pacotes de deploy</td>
+                </tr>
+                <tr>
+                    <td><code>sfdevops.enableAuditLog</code></td>
+                    <td>boolean</td>
+                    <td><code>true</code></td>
+                    <td>Habilitar log de auditoria</td>
+                </tr>
+                <tr>
+                    <td><code>sfdevops.auditLogPath</code></td>
+                    <td>string</td>
+                    <td><code>"./.sfdevops/audit.log"</code></td>
+                    <td>Caminho do arquivo de log de auditoria</td>
+                </tr>
+                <tr>
+                    <td><code>sfdevops.autoGenerateCommitMessage</code></td>
+                    <td>boolean</td>
+                    <td><code>true</code></td>
+                    <td>Gerar automaticamente sugestão de mensagem de commit</td>
+                </tr>
+                <tr>
+                    <td><code>sfdevops.metadataApiVersion</code></td>
+                    <td>string</td>
+                    <td><code>"59.0"</code></td>
+                    <td>Versão da Metadata API do Salesforce</td>
+                </tr>
+            </table>
+        </section>
+
+        <div class="page-break"></div>
+
+        <!-- Section 10 -->
+        <section class="section" id="fluxos">
+            <h2>10. Fluxos de Trabalho</h2>
+            
+            <h3>10.1 Fluxo Completo de Deploy</h3>
+            
+            <div class="diagram">
+┌─────────────────────────────────────────────────────────────┐
+│                    INÍCIO DO FLUXO                          │
+└────────────────────────┬────────────────────────────────────┘
+                         │
+                         ▼
+┌─────────────────────────────────────────────────────────────┐
+│  1. CONEXÃO                                                 │
+│     - Usuário abre projeto Salesforce no VS Code            │
+│     - Extensão é ativada automaticamente                    │
+│     - Verifica SF CLI instalado                             │
+│     - Carrega org padrão                                    │
+└────────────────────────┬────────────────────────────────────┘
+                         │
+                         ▼
+┌─────────────────────────────────────────────────────────────┐
+│  2. EXPLORAÇÃO DE METADADOS                                 │
+│     - Usuário navega pela Tree View de Metadados            │
+│     - Expande categorias (Permission Sets, Objects, etc.)   │
+│     - Visualiza detalhes de cada componente                 │
+└────────────────────────┬────────────────────────────────────┘
+                         │
+                         ▼
+┌─────────────────────────────────────────────────────────────┐
+│  3. SELEÇÃO DE COMPONENTES                                  │
+│     - Usuário clica em "+" para adicionar componentes       │
+│     - OU executa "Montagem Assistida de Deploy"             │
+│     - Escolhe incluir componentes relacionados              │
+│     - Componentes aparecem na Tree View de Seleção          │
+└────────────────────────┬────────────────────────────────────┘
+                         │
+                         ▼
+┌─────────────────────────────────────────────────────────────┐
+│  4. REVISÃO DA SELEÇÃO                                      │
+│     - Usuário revisa componentes selecionados               │
+│     - Remove itens indesejados                              │
+│     - Adiciona mais componentes se necessário               │
+└────────────────────────┬────────────────────────────────────┘
+                         │
+                         ▼
+┌─────────────────────────────────────────────────────────────┐
+│  5. GERAÇÃO DO PACOTE                                       │
+│     - Usuário executa "Criar Pacote de Deploy"              │
+│     - Informa org de destino (opcional)                     │
+│     - Extensão gera package.xml e XMLs de metadados         │
+│     - Arquivos são salvos em ./deploy-packages/             │
+└────────────────────────┬────────────────────────────────────┘
+                         │
+                         ▼
+┌─────────────────────────────────────────────────────────────┐
+│  6. AUDITORIA                                               │
+│     - Operação é registrada no log de auditoria             │
+│     - Inclui timestamp, usuário, componentes                │
+│     - Log pode ser consultado na Tree View de Auditoria     │
+└────────────────────────┬────────────────────────────────────┘
+                         │
+                         ▼
+┌─────────────────────────────────────────────────────────────┐
+│                     FIM DO FLUXO                            │
+│     Pacote pronto para deploy via SF CLI ou CI/CD           │
+└─────────────────────────────────────────────────────────────┘
+            </div>
+
+            <h3>10.2 Estrutura do Pacote Exportado</h3>
+            
+            <pre><code>deploy_2024-01-15T10-30-45-123Z/
+├── package.xml              # Manifest do deploy
+├── destructiveChanges.xml   # (opcional) Componentes para remoção
+├── deploy-info.json         # Informações de auditoria
+└── permissionsets/          # Arquivos de metadados
+    └── MyPermissionSet.permissionset-meta.xml</code></pre>
+
+            <h3>10.3 Exemplo de package.xml Gerado</h3>
+            
+            <pre><code><span class="keyword">&lt;?xml version="1.0" encoding="UTF-8"?&gt;</span>
+<span class="type">&lt;Package</span> <span class="property">xmlns</span>=<span class="string">"http://soap.sforce.com/2006/04/metadata"</span><span class="type">&gt;</span>
+    <span class="type">&lt;types&gt;</span>
+        <span class="type">&lt;members&gt;</span>MyPermissionSet<span class="type">&lt;/members&gt;</span>
+        <span class="type">&lt;name&gt;</span>PermissionSet<span class="type">&lt;/name&gt;</span>
+    <span class="type">&lt;/types&gt;</span>
+    <span class="type">&lt;types&gt;</span>
+        <span class="type">&lt;members&gt;</span>Account<span class="type">&lt;/members&gt;</span>
+        <span class="type">&lt;members&gt;</span>Contact<span class="type">&lt;/members&gt;</span>
+        <span class="type">&lt;name&gt;</span>CustomObject<span class="type">&lt;/name&gt;</span>
+    <span class="type">&lt;/types&gt;</span>
+    <span class="type">&lt;version&gt;</span>59.0<span class="type">&lt;/version&gt;</span>
+<span class="type">&lt;/Package&gt;</span></code></pre>
+        </section>
+
+        <!-- Appendix -->
+        <section class="section">
+            <h2>Apêndice: Dependências</h2>
+            
+            <h3>Dependências de Produção</h3>
+            <table>
+                <tr>
+                    <th>Pacote</th>
+                    <th>Versão</th>
+                    <th>Uso</th>
+                </tr>
+                <tr>
+                    <td><code>fast-xml-parser</code></td>
+                    <td>^4.3.2</td>
+                    <td>Parsing e construção de XML</td>
+                </tr>
+                <tr>
+                    <td><code>xml2js</code></td>
+                    <td>^0.6.2</td>
+                    <td>Parsing de XML (backup)</td>
+                </tr>
+            </table>
+
+            <h3>Dependências de Desenvolvimento</h3>
+            <table>
+                <tr>
+                    <th>Pacote</th>
+                    <th>Versão</th>
+                    <th>Uso</th>
+                </tr>
+                <tr>
+                    <td><code>@types/vscode</code></td>
+                    <td>^1.85.0</td>
+                    <td>Tipos do VS Code API</td>
+                </tr>
+                <tr>
+                    <td><code>typescript</code></td>
+                    <td>^5.3.2</td>
+                    <td>Compilador TypeScript</td>
+                </tr>
+                <tr>
+                    <td><code>eslint</code></td>
+                    <td>^8.55.0</td>
+                    <td>Linting</td>
+                </tr>
+                <tr>
+                    <td><code>@vscode/vsce</code></td>
+                    <td>^2.22.0</td>
+                    <td>Empacotamento da extensão</td>
+                </tr>
+                <tr>
+                    <td><code>mocha</code></td>
+                    <td>^10.2.0</td>
+                    <td>Framework de testes</td>
+                </tr>
+            </table>
+        </section>
+
+        <!-- Glossary -->
+        <section class="section">
+            <h2>Glossário</h2>
+            
+            <table>
+                <tr>
+                    <th>Termo</th>
+                    <th>Definição</th>
+                </tr>
+                <tr>
+                    <td><strong>Org</strong></td>
+                    <td>Instância do Salesforce (organização)</td>
+                </tr>
+                <tr>
+                    <td><strong>Sandbox</strong></td>
+                    <td>Ambiente de desenvolvimento/teste do Salesforce</td>
+                </tr>
+                <tr>
+                    <td><strong>Metadata</strong></td>
+                    <td>Configurações e customizações do Salesforce</td>
+                </tr>
+                <tr>
+                    <td><strong>Permission Set</strong></td>
+                    <td>Conjunto de permissões atribuíveis a usuários</td>
+                </tr>
+                <tr>
+                    <td><strong>Profile</strong></td>
+                    <td>Perfil de usuário com permissões base</td>
+                </tr>
+                <tr>
+                    <td><strong>package.xml</strong></td>
+                    <td>Arquivo manifest que lista componentes para deploy</td>
+                </tr>
+                <tr>
+                    <td><strong>SF CLI</strong></td>
+                    <td>Salesforce Command Line Interface</td>
+                </tr>
+                <tr>
+                    <td><strong>SOQL</strong></td>
+                    <td>Salesforce Object Query Language</td>
+                </tr>
+                <tr>
+                    <td><strong>Metadata API</strong></td>
+                    <td>API do Salesforce para manipular metadados</td>
+                </tr>
+            </table>
+        </section>
+
+        <footer class="footer">
+            <p><strong>SF DevOps Assistant</strong> - Documentação Técnica v1.0.0</p>
+            <p>Desenvolvido como projeto de demonstração técnica de estágio</p>
+            <p>© 2024 - Feito com ❤️ para a comunidade Salesforce</p>
+        </footer>
+    </div>
+</body>
+</html>

@@ -1,0 +1,267 @@
+{
+  "name": "salesforce-devops-assistant",
+  "displayName": "Salesforce DevOps Assistant",
+  "description": "Extensão VS Code para assistência inteligente em deploy de metadados Salesforce com foco em DevOps e boas práticas",
+  "version": "1.0.0",
+  "publisher": "salesforce-devops",
+  "engines": {
+    "vscode": "^1.85.0"
+  },
+  "categories": [
+    "Other",
+    "Debuggers"
+  ],
+  "keywords": [
+    "salesforce",
+    "devops",
+    "metadata",
+    "deploy",
+    "permission sets",
+    "profiles"
+  ],
+  "activationEvents": [
+    "workspaceContains:sfdx-project.json",
+    "onCommand:sfdevops.authenticate"
+  ],
+  "main": "./out/extension.js",
+  "contributes": {
+    "commands": [
+      {
+        "command": "sfdevops.authenticate",
+        "title": "SF DevOps: Conectar à Org",
+        "icon": "$(plug)"
+      },
+      {
+        "command": "sfdevops.refreshMetadata",
+        "title": "SF DevOps: Atualizar Metadados",
+        "icon": "$(refresh)"
+      },
+      {
+        "command": "sfdevops.selectOrg",
+        "title": "SF DevOps: Selecionar Org",
+        "icon": "$(server)"
+      },
+      {
+        "command": "sfdevops.viewPermissionSets",
+        "title": "SF DevOps: Ver Permission Sets",
+        "icon": "$(shield)"
+      },
+      {
+        "command": "sfdevops.viewProfiles",
+        "title": "SF DevOps: Ver Profiles",
+        "icon": "$(person)"
+      },
+      {
+        "command": "sfdevops.viewObjects",
+        "title": "SF DevOps: Ver Objetos",
+        "icon": "$(database)"
+      },
+      {
+        "command": "sfdevops.viewApexClasses",
+        "title": "SF DevOps: Ver Classes Apex",
+        "icon": "$(code)"
+      },
+      {
+        "command": "sfdevops.viewFlows",
+        "title": "SF DevOps: Ver Flows",
+        "icon": "$(git-merge)"
+      },
+      {
+        "command": "sfdevops.createDeployPackage",
+        "title": "SF DevOps: Criar Pacote de Deploy",
+        "icon": "$(package)"
+      },
+      {
+        "command": "sfdevops.assistedDeploy",
+        "title": "SF DevOps: Montagem Assistida de Deploy",
+        "icon": "$(rocket)"
+      },
+      {
+        "command": "sfdevops.diffMetadata",
+        "title": "SF DevOps: Comparar Metadados",
+        "icon": "$(diff)"
+      },
+      {
+        "command": "sfdevops.diffLocalVsOrg",
+        "title": "SF DevOps: Diff Local vs Org",
+        "icon": "$(git-compare)"
+      },
+      {
+        "command": "sfdevops.diffOrgVsOrg",
+        "title": "SF DevOps: Diff Org vs Org",
+        "icon": "$(git-compare)"
+      },
+      {
+        "command": "sfdevops.viewAuditLog",
+        "title": "SF DevOps: Ver Log de Auditoria",
+        "icon": "$(history)"
+      },
+      {
+        "command": "sfdevops.generateCommitMessage",
+        "title": "SF DevOps: Gerar Mensagem de Commit",
+        "icon": "$(git-commit)"
+      },
+      {
+        "command": "sfdevops.addToDeploySelection",
+        "title": "Adicionar ao Deploy",
+        "icon": "$(add)"
+      },
+      {
+        "command": "sfdevops.removeFromDeploySelection",
+        "title": "Remover do Deploy",
+        "icon": "$(remove)"
+      },
+      {
+        "command": "sfdevops.clearDeploySelection",
+        "title": "Limpar Seleção de Deploy",
+        "icon": "$(clear-all)"
+      },
+      {
+        "command": "sfdevops.generatePackageXml",
+        "title": "SF DevOps: Gerar package.xml",
+        "icon": "$(file-code)"
+      }
+    ],
+    "viewsContainers": {
+      "activitybar": [
+        {
+          "id": "sfdevops-explorer",
+          "title": "SF DevOps Assistant",
+          "icon": "$(cloud)"
+        }
+      ]
+    },
+    "views": {
+      "sfdevops-explorer": [
+        {
+          "id": "sfdevops-connection",
+          "name": "Conexão",
+          "icon": "$(plug)",
+          "contextualTitle": "Conexão Salesforce"
+        },
+        {
+          "id": "sfdevops-metadata",
+          "name": "Metadados",
+          "icon": "$(list-tree)",
+          "contextualTitle": "Explorador de Metadados"
+        },
+        {
+          "id": "sfdevops-deploy-selection",
+          "name": "Seleção de Deploy",
+          "icon": "$(package)",
+          "contextualTitle": "Itens para Deploy"
+        },
+        {
+          "id": "sfdevops-audit",
+          "name": "Auditoria",
+          "icon": "$(history)",
+          "contextualTitle": "Log de Auditoria"
+        }
+      ]
+    },
+    "menus": {
+      "view/title": [
+        {
+          "command": "sfdevops.refreshMetadata",
+          "when": "view == sfdevops-metadata",
+          "group": "navigation"
+        },
+        {
+          "command": "sfdevops.selectOrg",
+          "when": "view == sfdevops-connection",
+          "group": "navigation"
+        },
+        {
+          "command": "sfdevops.clearDeploySelection",
+          "when": "view == sfdevops-deploy-selection",
+          "group": "navigation"
+        },
+        {
+          "command": "sfdevops.generatePackageXml",
+          "when": "view == sfdevops-deploy-selection",
+          "group": "navigation"
+        }
+      ],
+      "view/item/context": [
+        {
+          "command": "sfdevops.addToDeploySelection",
+          "when": "view == sfdevops-metadata",
+          "group": "inline"
+        },
+        {
+          "command": "sfdevops.removeFromDeploySelection",
+          "when": "view == sfdevops-deploy-selection",
+          "group": "inline"
+        }
+      ]
+    },
+    "configuration": {
+      "title": "Salesforce DevOps Assistant",
+      "properties": {
+        "sfdevops.defaultOrg": {
+          "type": "string",
+          "default": "",
+          "description": "Alias ou username da org padrão"
+        },
+        "sfdevops.outputDirectory": {
+          "type": "string",
+          "default": "./deploy-packages",
+          "description": "Diretório para geração de pacotes de deploy"
+        },
+        "sfdevops.enableAuditLog": {
+          "type": "boolean",
+          "default": true,
+          "description": "Habilitar log de auditoria"
+        },
+        "sfdevops.auditLogPath": {
+          "type": "string",
+          "default": "./.sfdevops/audit.log",
+          "description": "Caminho do arquivo de log de auditoria"
+        },
+        "sfdevops.autoGenerateCommitMessage": {
+          "type": "boolean",
+          "default": true,
+          "description": "Gerar automaticamente sugestão de mensagem de commit"
+        },
+        "sfdevops.metadataApiVersion": {
+          "type": "string",
+          "default": "59.0",
+          "description": "Versão da Metadata API do Salesforce"
+        }
+      }
+    }
+  },
+  "scripts": {
+    "vscode:prepublish": "npm run compile",
+    "compile": "tsc -p ./",
+    "watch": "tsc -watch -p ./",
+    "pretest": "npm run compile && npm run lint",
+    "lint": "eslint src --ext ts",
+    "test": "node ./out/test/runTest.js",
+    "package": "vsce package"
+  },
+  "devDependencies": {
+    "@types/glob": "^8.1.0",
+    "@types/mocha": "^10.0.6",
+    "@types/node": "^20.10.0",
+    "@types/vscode": "^1.85.0",
+    "@types/xml2js": "^0.4.14",
+    "@typescript-eslint/eslint-plugin": "^6.13.0",
+    "@typescript-eslint/parser": "^6.13.0",
+    "@vscode/test-electron": "^2.3.8",
+    "@vscode/vsce": "^2.22.0",
+    "eslint": "^8.55.0",
+    "glob": "^10.3.10",
+    "mocha": "^10.2.0",
+    "typescript": "^5.3.2"
+  },
+  "dependencies": {
+    "fast-xml-parser": "^4.3.2",
+    "xml2js": "^0.6.2"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/your-username/salesforce-devops-assistant"
+  },
+  "license": "MIT"
+}
