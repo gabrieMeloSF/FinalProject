@@ -547,6 +547,7 @@
 
             <h3>3.8 Tipos de Auditoria</h3>
             
+            <h4>Log Local da Extensão</h4>
             <pre><code><span class="keyword">interface</span> <span class="type">AuditEntry</span> {
     <span class="property">id</span>: <span class="type">string</span>;                      <span class="comment">// ID único da entrada</span>
     <span class="property">timestamp</span>: <span class="type">Date</span>;                 <span class="comment">// Data/hora da ação</span>
@@ -565,6 +566,29 @@
     | <span class="string">'SELECTION_UPDATED'</span>            <span class="comment">// Seleção atualizada</span>
     | <span class="string">'ORG_CONNECTED'</span>                <span class="comment">// Org conectada</span>
     | <span class="string">'ORG_DISCONNECTED'</span>;            <span class="comment">// Org desconectada</span></code></pre>
+
+            <h4>Setup Audit Trail (Salesforce)</h4>
+            <pre><code><span class="comment">// Representa uma entrada do Setup Audit Trail do Salesforce</span>
+<span class="keyword">interface</span> <span class="type">SetupAuditTrailEntry</span> {
+    <span class="property">id</span>: <span class="type">string</span>;                      <span class="comment">// ID do registro</span>
+    <span class="property">action</span>: <span class="type">string</span>;                  <span class="comment">// Ação realizada</span>
+    <span class="property">section</span>: <span class="type">string</span>;                 <span class="comment">// Seção do Setup</span>
+    <span class="property">display</span>: <span class="type">string</span>;                 <span class="comment">// Descrição legível</span>
+    <span class="property">createdDate</span>: <span class="type">Date</span>;               <span class="comment">// Data/hora da alteração</span>
+    <span class="property">createdById</span>: <span class="type">string</span>;             <span class="comment">// ID do usuário</span>
+    <span class="property">createdByName</span>: <span class="type">string</span>;           <span class="comment">// Nome do usuário</span>
+    <span class="property">delegateUser</span>?: <span class="type">string</span>;           <span class="comment">// Usuário delegado</span>
+}
+
+<span class="comment">// Filtros para busca do Audit Trail</span>
+<span class="keyword">interface</span> <span class="type">AuditTrailFilter</span> {
+    <span class="property">section</span>?: <span class="type">string</span>;                <span class="comment">// Filtrar por seção</span>
+    <span class="property">userId</span>?: <span class="type">string</span>;                 <span class="comment">// Filtrar por usuário</span>
+    <span class="property">dateFrom</span>?: <span class="type">Date</span>;                 <span class="comment">// Data inicial</span>
+    <span class="property">dateTo</span>?: <span class="type">Date</span>;                   <span class="comment">// Data final</span>
+    <span class="property">searchTerm</span>?: <span class="type">string</span>;             <span class="comment">// Busca por texto</span>
+    <span class="property">limit</span>?: <span class="type">number</span>;                  <span class="comment">// Limite de registros</span>
+}</code></pre>
 
             <h3>3.9 Resultado de Operação</h3>
             
@@ -836,23 +860,63 @@ Stack: Error: Detalhes do erro</code></pre>
 }</code></pre>
 
             <h3>5.5 Audit Service (<code>src/services/auditService.ts</code>)</h3>
-            <p>Serviço de auditoria e rastreabilidade.</p>
+            <p>Serviço de auditoria e rastreabilidade com duas funcionalidades principais:</p>
+            <ol>
+                <li><strong>Log Local</strong>: Registra ações realizadas pela extensão</li>
+                <li><strong>Setup Audit Trail</strong>: Busca e exibe o histórico de alterações do Salesforce</li>
+            </ol>
             
             <pre><code><span class="keyword">class</span> <span class="type">AuditService</span> {
+    <span class="comment">// ========== LOG LOCAL ==========</span>
+    
     <span class="comment">// Logging de ações</span>
     <span class="function">logPackageCreated</span>(pkg: <span class="type">DeployPackage</span>): <span class="type">Promise</span>&lt;<span class="type">void</span>&gt;;
     <span class="function">logPackageExported</span>(path: <span class="type">string</span>): <span class="type">Promise</span>&lt;<span class="type">void</span>&gt;;
     <span class="function">logDiffExecuted</span>(result: <span class="type">DiffResult</span>): <span class="type">Promise</span>&lt;<span class="type">void</span>&gt;;
     <span class="function">logOrgConnected</span>(orgAlias: <span class="type">string</span>): <span class="type">Promise</span>&lt;<span class="type">void</span>&gt;;
     
-    <span class="comment">// Consultas</span>
+    <span class="comment">// Consultas do log local</span>
     <span class="function">getEntries</span>(): <span class="type">AuditEntry</span>[];
     <span class="function">getRecentEntries</span>(count?: <span class="type">number</span>): <span class="type">AuditEntry</span>[];
     
     <span class="comment">// Manutenção</span>
     <span class="function">clearLog</span>(): <span class="type">Promise</span>&lt;<span class="type">void</span>&gt;;
     <span class="function">exportLog</span>(outputPath: <span class="type">string</span>): <span class="type">Promise</span>&lt;<span class="type">OperationResult</span>&lt;<span class="type">string</span>&gt;&gt;;
+    
+    <span class="comment">// ========== SETUP AUDIT TRAIL (SALESFORCE) ==========</span>
+    
+    <span class="comment">// Busca de dados</span>
+    <span class="function">fetchSetupAuditTrail</span>(filter?: <span class="type">AuditTrailFilter</span>): <span class="type">Promise</span>&lt;<span class="type">OperationResult</span>&lt;<span class="type">SetupAuditTrailEntry</span>[]&gt;&gt;;
+    <span class="function">getAuditTrailSections</span>(): <span class="type">Promise</span>&lt;<span class="type">OperationResult</span>&lt;<span class="type">string</span>[]&gt;&gt;;
+    
+    <span class="comment">// Cache</span>
+    <span class="function">getSetupAuditTrailCache</span>(): <span class="type">SetupAuditTrailEntry</span>[];
+    <span class="function">getSetupAuditTrailLastFetch</span>(): <span class="type">Date</span> | <span class="type">null</span>;
+    
+    <span class="comment">// Formatação e Exportação</span>
+    <span class="function">formatAuditTrailEntry</span>(entry: <span class="type">SetupAuditTrailEntry</span>): <span class="type">string</span>;
+    <span class="function">formatSetupAuditTrail</span>(entries: <span class="type">SetupAuditTrailEntry</span>[]): <span class="type">string</span>;
+    <span class="function">exportSetupAuditTrail</span>(entries: <span class="type">SetupAuditTrailEntry</span>[], format: <span class="string">'txt'</span> | <span class="string">'json'</span> | <span class="string">'csv'</span>): <span class="type">Promise</span>&lt;<span class="type">OperationResult</span>&lt;<span class="type">string</span>&gt;&gt;;
 }</code></pre>
+
+            <h4>Query SOQL para Setup Audit Trail</h4>
+            <pre><code class="sql">SELECT Id, Action, Section, Display, CreatedDate, 
+       CreatedById, CreatedBy.Name, DelegateUser 
+FROM SetupAuditTrail 
+ORDER BY CreatedDate DESC 
+LIMIT 200</code></pre>
+
+            <h4>Formatos de Exportação</h4>
+            <table>
+                <thead>
+                    <tr><th>Formato</th><th>Extensão</th><th>Descrição</th></tr>
+                </thead>
+                <tbody>
+                    <tr><td>Texto</td><td>.txt</td><td>Documento formatado legível</td></tr>
+                    <tr><td>JSON</td><td>.json</td><td>Estrutura para processamento</td></tr>
+                    <tr><td>CSV</td><td>.csv</td><td>Para abrir em planilhas</td></tr>
+                </tbody>
+            </table>
         </section>
 
         <div class="page-break"></div>
@@ -915,21 +979,43 @@ Seleção de Deploy
             </div>
 
             <h3>6.4 Audit Tree Provider</h3>
-            <p>Exibe o histórico de operações realizadas.</p>
+            <p>Exibe o Setup Audit Trail do Salesforce e permite interação via sidebar.</p>
             
             <div class="diagram">
-Auditoria
-├── Hoje (3)
-│   ├── Pacote Criado (10:30)
-│   │   ├── Usuário: gabriel.silva
-│   │   ├── Data/Hora: 15/01/2024 10:30:45
-│   │   ├── Org Origem: DevSandbox
-│   │   └── Componentes: 5
-│   ├── Pacote Exportado (10:31)
-│   └── Org Conectada (09:15)
-├── Ontem (5)
-└── Anteriores (12)
+Histórico de Auditoria
+├── ⟳ Carregar Setup Audit Trail     [Clicável]
+├── Filtro: All                       [Clicável para alterar]
+├── 150 registros (atualizado 14:30)
+├── 📅 24/02/2026 (45)
+│   ├── Added permission set "Sales_Admin" to user João
+│   │   ├── Usuário: admin@empresa.com
+│   │   ├── Data/Hora: 24/02/2026 10:30:45
+│   │   ├── Seção: Permission Sets
+│   │   ├── Ação: insertedPermissionSetAssignment
+│   │   └── Descrição: Added permission set...
+│   └── Changed profile "Standard User"...
+├── 📅 23/02/2026 (35)
+│   └── ...
+└── 📅 22/02/2026 (70)
+    └── ...
             </div>
+            
+            <h4>Ícones por Seção</h4>
+            <table>
+                <thead>
+                    <tr><th>Seção</th><th>Ícone</th><th>Cor</th></tr>
+                </thead>
+                <tbody>
+                    <tr><td>Permission Sets</td><td>shield</td><td>Roxo</td></tr>
+                    <tr><td>Profiles</td><td>person</td><td>Azul</td></tr>
+                    <tr><td>Users</td><td>account</td><td>Verde</td></tr>
+                    <tr><td>Objects/Fields</td><td>database</td><td>Laranja</td></tr>
+                    <tr><td>Apex Classes</td><td>code</td><td>Amarelo</td></tr>
+                    <tr><td>Flows</td><td>workflow</td><td>Vermelho</td></tr>
+                    <tr><td>Security</td><td>lock</td><td>Vermelho</td></tr>
+                    <tr><td>Outros</td><td>history</td><td>Cinza</td></tr>
+                </tbody>
+            </table>
         </section>
 
         <div class="page-break"></div>
@@ -1065,6 +1151,7 @@ Auditoria
             </table>
 
             <h3>7.5 Comandos de Auditoria</h3>
+            <p>Comandos de auditoria e logs, incluindo integração com Setup Audit Trail do Salesforce.</p>
             <table>
                 <tr>
                     <th>Comando</th>
@@ -1074,9 +1161,54 @@ Auditoria
                 <tr>
                     <td>Ver Log de Auditoria</td>
                     <td><code>sfdevops.viewAuditLog</code></td>
-                    <td>Exibe/exporta/limpa log</td>
+                    <td>Menu principal de auditoria</td>
+                </tr>
+                <tr>
+                    <td>Carregar Setup Audit Trail</td>
+                    <td><code>sfdevops.refreshAuditTrail</code></td>
+                    <td>Busca dados do Salesforce e exibe em documento</td>
+                </tr>
+                <tr>
+                    <td>Filtrar Audit Trail</td>
+                    <td><code>sfdevops.filterAuditTrail</code></td>
+                    <td>Filtra por seção do Setup</td>
+                </tr>
+                <tr>
+                    <td>Buscar no Audit Trail</td>
+                    <td><code>sfdevops.searchAuditTrail</code></td>
+                    <td>Busca por termo no Audit Trail</td>
+                </tr>
+                <tr>
+                    <td>Exportar Audit Trail</td>
+                    <td><code>sfdevops.exportAuditTrail</code></td>
+                    <td>Exporta em TXT, JSON ou CSV</td>
                 </tr>
             </table>
+            
+            <h4>Fluxo do Setup Audit Trail</h4>
+            <div class="diagram">
+┌─────────────────────────────────────────────────────────────┐
+│                 Carregar Setup Audit Trail                   │
+├─────────────────────────────────────────────────────────────┤
+│  1. Usuário executa comando                                 │
+│  2. Extensão executa SOQL em SetupAuditTrail               │
+│  3. Dados são processados e formatados                      │
+│  4. Documento é aberto no editor com resultado formatado   │
+│  5. Sidebar é atualizada com registros agrupados por data  │
+└─────────────────────────────────────────────────────────────┘
+            </div>
+            
+            <h4>Seções de Filtro Disponíveis</h4>
+            <ul>
+                <li><code>All</code> - Todas as seções</li>
+                <li><code>Manage Users</code> - Gerenciamento de usuários</li>
+                <li><code>Security Controls</code> - Controles de segurança</li>
+                <li><code>Permission Sets</code> - Permission Sets</li>
+                <li><code>Profiles</code> - Profiles</li>
+                <li><code>Customize</code> - Customizações</li>
+                <li><code>Apex Classes</code> - Classes Apex</li>
+                <li><code>Flows</code> - Flows e processos</li>
+            </ul>
         </section>
 
         <div class="page-break"></div>
@@ -1251,6 +1383,79 @@ Auditoria
     <span class="type">&lt;/types&gt;</span>
     <span class="type">&lt;version&gt;</span>59.0<span class="type">&lt;/version&gt;</span>
 <span class="type">&lt;/Package&gt;</span></code></pre>
+
+            <h3>10.4 Fluxo de Setup Audit Trail</h3>
+            
+            <div class="diagram">
+┌─────────────────────────────────────────────────────────────┐
+│  1. Usuário executa comando                                  │
+│     - "SF DevOps: Carregar Setup Audit Trail"               │
+│     - Ou clica no botão na sidebar                          │
+└────────────────────────┬────────────────────────────────────┘
+                         │
+                         ▼
+┌─────────────────────────────────────────────────────────────┐
+│  2. Verifica conexão com org                                 │
+│     - Se não conectado, exibe mensagem de erro              │
+│     - Se conectado, prossegue                               │
+└────────────────────────┬────────────────────────────────────┘
+                         │
+                         ▼
+┌─────────────────────────────────────────────────────────────┐
+│  3. Executa SOQL na org                                      │
+│     SELECT Id, Action, Section, Display, CreatedDate,       │
+│            CreatedById, CreatedBy.Name, DelegateUser        │
+│     FROM SetupAuditTrail                                    │
+│     ORDER BY CreatedDate DESC LIMIT 200                     │
+└────────────────────────┬────────────────────────────────────┘
+                         │
+                         ▼
+┌─────────────────────────────────────────────────────────────┐
+│  4. Processa e formata resultados                            │
+│     - Converte datas                                        │
+│     - Agrupa por data                                       │
+│     - Aplica filtros (seção, texto)                         │
+└────────────────────────┬────────────────────────────────────┘
+                         │
+                         ▼
+┌─────────────────────────────────────────────────────────────┐
+│  5. Exibe documento formatado no editor                      │
+│     - Cabeçalho com org e data                              │
+│     - Registros agrupados por dia                           │
+│     - Detalhes: usuário, seção, ação, descrição            │
+└────────────────────────┬────────────────────────────────────┘
+                         │
+                         ▼
+┌─────────────────────────────────────────────────────────────┐
+│  6. Atualiza sidebar                                         │
+│     - Cache é atualizado                                    │
+│     - Tree View mostra registros                            │
+│     - Usuário pode expandir para detalhes                   │
+└─────────────────────────────────────────────────────────────┘
+            </div>
+            
+            <h4>Opções de Exportação</h4>
+            <div class="diagram">
+┌─────────────────────────────────────────────────────────────┐
+│  Usuário executa "SF DevOps: Exportar Audit Trail"          │
+└────────────────────────┬────────────────────────────────────┘
+                         │
+                         ▼
+┌─────────────────────────────────────────────────────────────┐
+│  Seleciona formato de exportação:                            │
+│                                                              │
+│  ┌─────────────┐  ┌─────────────┐  ┌─────────────┐          │
+│  │ Texto (.txt)│  │ JSON (.json)│  │  CSV (.csv) │          │
+│  │  Formatado  │  │ Estruturado │  │  Planilha   │          │
+│  └─────────────┘  └─────────────┘  └─────────────┘          │
+└────────────────────────┬────────────────────────────────────┘
+                         │
+                         ▼
+┌─────────────────────────────────────────────────────────────┐
+│  Arquivo salvo em: .sfdevops/audit-trail-TIMESTAMP.ext      │
+│  Opções: Abrir arquivo ou Abrir pasta                       │
+└─────────────────────────────────────────────────────────────┘
+            </div>
         </section>
 
         <!-- Appendix -->
@@ -1355,6 +1560,14 @@ Auditoria
                 <tr>
                     <td><strong>Metadata API</strong></td>
                     <td>API do Salesforce para manipular metadados</td>
+                </tr>
+                <tr>
+                    <td><strong>Setup Audit Trail</strong></td>
+                    <td>Histórico de alterações administrativas feitas no Setup do Salesforce</td>
+                </tr>
+                <tr>
+                    <td><strong>SetupAuditTrail</strong></td>
+                    <td>Objeto SOQL que armazena o histórico de alterações do Setup</td>
                 </tr>
             </table>
         </section>

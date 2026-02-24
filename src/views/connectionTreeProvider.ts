@@ -96,16 +96,22 @@ export class ConnectionTreeProvider implements vscode.TreeDataProvider<Connectio
      */
     public async refresh(): Promise<void> {
         try {
-            // Obtém a org atual
-            const defaultOrgResult = await sfdxService.getDefaultOrg();
-            if (defaultOrgResult.success && defaultOrgResult.data) {
-                this.currentOrg = defaultOrgResult.data;
-            }
-
-            // Lista todas as orgs disponíveis
+            // Lista todas as orgs disponíveis primeiro
             const orgsResult = await sfdxService.listOrgs();
             if (orgsResult.success && orgsResult.data) {
                 this.availableOrgs = orgsResult.data;
+            }
+
+            // Tenta obter a org atual (pode já estar definida no serviço)
+            const currentOrgFromService = sfdxService.getCurrentOrg();
+            if (currentOrgFromService) {
+                this.currentOrg = currentOrgFromService;
+            } else {
+                // Tenta obter a org padrão do CLI
+                const defaultOrgResult = await sfdxService.getDefaultOrg();
+                if (defaultOrgResult.success && defaultOrgResult.data) {
+                    this.currentOrg = defaultOrgResult.data;
+                }
             }
 
             this._onDidChangeTreeData.fire();

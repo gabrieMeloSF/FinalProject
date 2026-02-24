@@ -312,6 +312,52 @@ export interface AuditLog {
 }
 
 // ============================================================================
+// TIPOS DE SETUP AUDIT TRAIL (SALESFORCE)
+// ============================================================================
+
+/**
+ * Representa uma entrada do Setup Audit Trail do Salesforce
+ */
+export interface SetupAuditTrailEntry {
+    id: string;
+    action: string;
+    section: string;
+    display: string;
+    createdDate: Date;
+    createdById: string;
+    createdByName: string;
+    delegateUser?: string;
+}
+
+/**
+ * Filtros para busca do Audit Trail
+ */
+export interface AuditTrailFilter {
+    section?: string;
+    userId?: string;
+    dateFrom?: Date;
+    dateTo?: Date;
+    searchTerm?: string;
+    limit?: number;
+}
+
+/**
+ * Seções comuns do Setup Audit Trail
+ */
+export type AuditTrailSection = 
+    | 'Manage Users'
+    | 'Company Profile'
+    | 'Security Controls'
+    | 'Data Management'
+    | 'Customize'
+    | 'Permission Sets'
+    | 'Profiles'
+    | 'Custom Objects'
+    | 'Apex Classes'
+    | 'Flows'
+    | 'All';
+
+// ============================================================================
 // TIPOS DE TREE VIEW
 // ============================================================================
 
