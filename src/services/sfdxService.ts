@@ -148,6 +148,11 @@ export class SfdxService {
      */
     public async getOrgInfo(aliasOrUsername: string): Promise<OperationResult<OrgInfo>> {
         try {
+            // Validação do parâmetro
+            if (!aliasOrUsername || aliasOrUsername === 'undefined') {
+                return { success: false, error: 'Alias ou username da org não especificado' };
+            }
+
             const result = await this.executeSfdxCommand<SfdxOrgDisplayResult>(
                 `sf org display --target-org ${aliasOrUsername} --json`
             );
@@ -202,10 +207,16 @@ export class SfdxService {
     }
 
     /**
-     * Obtém a org padrão do projeto
+     * Obtém a org padrão do projeto ou a org atual se já estiver definida
      */
     public async getDefaultOrg(): Promise<OperationResult<OrgInfo>> {
         try {
+            // Se já tem uma org atual definida, retorna ela
+            if (this.currentOrg) {
+                return { success: true, data: this.currentOrg };
+            }
+
+            // Tenta obter a org padrão do projeto
             const result = await this.executeSfdxCommand<SfdxOrgDisplayResult>(
                 'sf org display --json'
             );
@@ -224,9 +235,9 @@ export class SfdxService {
             this.currentOrg = orgInfo;
             return { success: true, data: orgInfo };
         } catch (error) {
-            const errorMessage = error instanceof Error ? error.message : 'Erro desconhecido';
-            logger.error('Erro ao obter org padrão', error);
-            return { success: false, error: errorMessage };
+            // Se falhar e não há org padrão, apenas retorna sem erro (usuário precisa selecionar)
+            logger.debug('Nenhuma org padrão configurada - usuário deve selecionar uma org');
+            return { success: false, error: 'Nenhuma org padrão configurada. Selecione uma org.' };
         }
     }
 
@@ -275,8 +286,13 @@ export class SfdxService {
      */
     public async validateOrgPermissions(): Promise<OperationResult<boolean>> {
         try {
+            const target = this.currentOrg?.alias || this.currentOrg?.username;
+            if (!target) {
+                return { success: false, error: 'Nenhuma org selecionada', data: false };
+            }
+
             // Tenta uma query simples para validar acesso
-            const testQuery = 'sf data query --query "SELECT Id FROM Organization LIMIT 1" --json';
+            const testQuery = `sf data query --query "SELECT Id FROM Organization LIMIT 1" --target-org ${target} --json`;
             await this.executeSfdxCommand(testQuery);
             
             logger.info('Permissões da org validadas');

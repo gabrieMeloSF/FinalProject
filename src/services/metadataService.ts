@@ -396,30 +396,34 @@ export class MetadataService {
                 return { success: true, data: this.objectsCache };
             }
 
-            const query = `
-                SELECT Id, DeveloperName, NamespacePrefix, Description,
-                       CreatedDate, CreatedBy.Name,
-                       LastModifiedDate, LastModifiedBy.Name
-                FROM CustomObject
-            `;
-
-            // CustomObject não é diretamente queryable via SOQL padrão
-            // Usamos EntityDefinition ao invés
-            const entityQuery = `
-                SELECT QualifiedApiName, Label, Description, IsCustomizable,
-                       DeveloperName, NamespacePrefix
-                FROM EntityDefinition
-                WHERE IsCustomizable = true
-                ORDER BY Label
-            `;
+            // EntityDefinition - query simplificada (NOT LIKE não é bem suportado)
+            // Filtramos no código após receber os resultados
+            const entityQuery = "SELECT QualifiedApiName, Label, KeyPrefix FROM EntityDefinition WHERE IsCustomizable = true ORDER BY Label LIMIT 500";
 
             const records = await this.executeQuery<Record<string, unknown>>(entityQuery);
 
-            this.objectsCache = records.map(record => ({
+            // Filtra objetos de sistema no código
+            const filteredRecords = records.filter(record => {
+                const apiName = record.QualifiedApiName as string;
+                if (!apiName) return false;
+                // Exclui objetos de sistema
+                if (apiName.endsWith('Share')) return false;
+                if (apiName.endsWith('History')) return false;
+                if (apiName.endsWith('Feed')) return false;
+                if (apiName.endsWith('ChangeEvent')) return false;
+                if (apiName.startsWith('AI')) return false;
+                if (apiName.includes('__')) {
+                    // Inclui apenas custom objects (__c) e exclui managed packages complexos
+                    return apiName.endsWith('__c') || apiName.endsWith('__mdt') || apiName.endsWith('__e');
+                }
+                return true;
+            });
+
+            this.objectsCache = filteredRecords.slice(0, 200).map(record => ({
                 id: record.QualifiedApiName as string,
                 fullName: record.QualifiedApiName as string,
-                label: record.Label as string,
-                description: record.Description as string | undefined,
+                label: record.Label as string || record.QualifiedApiName as string,
+                description: undefined,
                 type: 'CustomObject' as const,
                 isCustom: (record.QualifiedApiName as string).endsWith('__c'),
                 fields: [],
@@ -441,32 +445,26 @@ export class MetadataService {
      */
     public async listObjectFields(objectName: string): Promise<OperationResult<CustomField[]>> {
         try {
-            const query = `
-                SELECT QualifiedApiName, Label, DataType, IsNillable, 
-                       IsUnique, Length, Precision, Scale, Description,
-                       ReferenceTo.QualifiedApiName
-                FROM FieldDefinition
-                WHERE EntityDefinition.QualifiedApiName = '${objectName}'
-                ORDER BY Label
-            `;
+            // FieldDefinition - query em linha única para evitar problemas com CLI
+            const query = `SELECT QualifiedApiName, Label, DataType FROM FieldDefinition WHERE EntityDefinition.QualifiedApiName = '${objectName}' ORDER BY Label LIMIT 300`;
 
             const records = await this.executeQuery<Record<string, unknown>>(query);
 
             const fields: CustomField[] = records.map(record => ({
                 id: record.QualifiedApiName as string,
                 fullName: `${objectName}.${record.QualifiedApiName}`,
-                label: record.Label as string,
-                description: record.Description as string | undefined,
+                label: record.Label as string || record.QualifiedApiName as string,
+                description: undefined,
                 type: 'CustomField' as const,
                 objectName,
-                fieldType: record.DataType as string,
-                isRequired: !(record.IsNillable as boolean),
-                isUnique: record.IsUnique as boolean,
+                fieldType: record.DataType as string || 'Unknown',
+                isRequired: false,
+                isUnique: false,
                 isExternalId: false,
-                length: record.Length as number | undefined,
-                precision: record.Precision as number | undefined,
-                scale: record.Scale as number | undefined,
-                referenceTo: (record.ReferenceTo as Record<string, string>)?.QualifiedApiName,
+                length: undefined,
+                precision: undefined,
+                scale: undefined,
+                referenceTo: undefined,
             }));
 
             logger.info(`${fields.length} campo(s) encontrado(s) para ${objectName}`);
@@ -540,13 +538,15 @@ export class MetadataService {
                 return { success: true, data: this.flowsCache };
             }
 
+            // FlowDefinitionView não tem campos de auditoria (CreatedDate, etc)
+            // Apenas campos básicos estão disponíveis
             const query = `
-                SELECT Id, ApiName, Label, Description, ProcessType, Status,
-                       CreatedDate, CreatedBy.Name,
-                       LastModifiedDate, LastModifiedBy.Name
+                SELECT Id, ApiName, Label, Description, ProcessType, 
+                       ActiveVersionId, LatestVersionId, IsActive
                 FROM FlowDefinitionView
                 WHERE IsTemplate = false
                 ORDER BY Label
+                LIMIT 200
             `;
 
             const records = await this.executeQuery<Record<string, unknown>>(query);
@@ -554,16 +554,16 @@ export class MetadataService {
             this.flowsCache = records.map(record => ({
                 id: record.Id as string,
                 fullName: record.ApiName as string,
-                label: record.Label as string,
+                label: record.Label as string || record.ApiName as string,
                 description: record.Description as string | undefined,
                 type: 'Flow' as const,
-                processType: record.ProcessType as string,
-                status: record.Status as 'Active' | 'Inactive' | 'Draft' | 'Obsolete',
+                processType: record.ProcessType as string || 'Flow',
+                status: record.IsActive ? 'Active' as const : 'Inactive' as const,
                 apiVersion: this.getApiVersion(),
-                createdDate: record.CreatedDate ? new Date(record.CreatedDate as string) : undefined,
-                createdBy: (record.CreatedBy as Record<string, string>)?.Name,
-                lastModifiedDate: record.LastModifiedDate ? new Date(record.LastModifiedDate as string) : undefined,
-                lastModifiedBy: (record.LastModifiedBy as Record<string, string>)?.Name,
+                createdDate: undefined,
+                createdBy: undefined,
+                lastModifiedDate: undefined,
+                lastModifiedBy: undefined,
             }));
 
             logger.info(`${this.flowsCache.length} Flow(s) encontrado(s)`);

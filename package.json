@@ -120,6 +120,26 @@
         "command": "sfdevops.generatePackageXml",
         "title": "SF DevOps: Gerar package.xml",
         "icon": "$(file-code)"
+      },
+      {
+        "command": "sfdevops.refreshAuditTrail",
+        "title": "SF DevOps: Carregar Setup Audit Trail",
+        "icon": "$(cloud-download)"
+      },
+      {
+        "command": "sfdevops.filterAuditTrail",
+        "title": "SF DevOps: Filtrar Audit Trail",
+        "icon": "$(filter)"
+      },
+      {
+        "command": "sfdevops.exportAuditTrail",
+        "title": "SF DevOps: Exportar Audit Trail",
+        "icon": "$(export)"
+      },
+      {
+        "command": "sfdevops.searchAuditTrail",
+        "title": "SF DevOps: Buscar no Audit Trail",
+        "icon": "$(search)"
       }
     ],
     "viewsContainers": {

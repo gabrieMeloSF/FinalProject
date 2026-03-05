@@ -520,46 +520,129 @@ export class DiffService {
      */
     public formatDiffResult(result: DiffResult): string {
         const lines: string[] = [];
+        const dateFormatted = result.generatedAt.toLocaleString('pt-BR', {
+            day: '2-digit',
+            month: '2-digit',
+            year: 'numeric',
+            hour: '2-digit',
+            minute: '2-digit'
+        });
 
-        lines.push('═══════════════════════════════════════════════════════════');
-        lines.push(`DIFF DE METADADOS - ${result.componentType}`);
-        lines.push('═══════════════════════════════════════════════════════════');
+        lines.push('╔═══════════════════════════════════════════════════════════════════════════════╗');
+        lines.push(`║           COMPARAÇÃO DE METADADOS - ${result.componentType.padEnd(30)}       ║`);
+        lines.push('╚═══════════════════════════════════════════════════════════════════════════════╝');
         lines.push('');
-        lines.push(`Origem: ${result.source.identifier} (${result.source.type})`);
-        lines.push(`Destino: ${result.target.identifier} (${result.target.type})`);
-        lines.push(`Data: ${result.generatedAt.toISOString()}`);
+        lines.push('┌───────────────────────────────────────────────────────────────────────────────┐');
+        lines.push('│  AMBIENTES COMPARADOS                                                         │');
+        lines.push('├───────────────────────────────────────────────────────────────────────────────┤');
+        lines.push(`│  🔵 ORIGEM:  ${result.source.identifier.padEnd(50)}        │`);
+        lines.push(`│  🟢 DESTINO: ${result.target.identifier.padEnd(50)}        │`);
+        lines.push(`│  📅 Data:    ${dateFormatted.padEnd(50)}        │`);
+        lines.push('└───────────────────────────────────────────────────────────────────────────────┘');
         lines.push('');
-        lines.push('───────────────────────────────────────────────────────────');
-        lines.push('RESUMO');
-        lines.push('───────────────────────────────────────────────────────────');
-        lines.push(`Total de componentes: ${result.summary.totalComponents}`);
-        lines.push(`  + Adicionados: ${result.summary.added}`);
-        lines.push(`  - Removidos: ${result.summary.removed}`);
-        lines.push(`  ~ Modificados: ${result.summary.modified}`);
-        lines.push(`  = Inalterados: ${result.summary.unchanged}`);
+        lines.push('┌───────────────────────────────────────────────────────────────────────────────┐');
+        lines.push('│  RESUMO DA COMPARAÇÃO                                                         │');
+        lines.push('├───────────────────────────────────────────────────────────────────────────────┤');
+        lines.push(`│  Total de componentes analisados: ${result.summary.totalComponents}`.padEnd(80) + '│');
+        lines.push('│                                                                               │');
+        
+        if (result.summary.added > 0) {
+            lines.push(`│  ✅ ${result.summary.added} NOVO(S)       → Existe na ORIGEM, falta no DESTINO`.padEnd(80) + '│');
+            lines.push('│                        (Ação: fazer deploy para o destino)'.padEnd(80) + '│');
+        } else {
+            lines.push('│  ✅ 0 NOVO(S)       → Nenhum componente novo'.padEnd(80) + '│');
+        }
+        
+        if (result.summary.removed > 0) {
+            lines.push(`│  ❌ ${result.summary.removed} REMOVIDO(S)  → Existe no DESTINO, não existe na ORIGEM`.padEnd(80) + '│');
+            lines.push('│                        (Ação: remover do destino ou adicionar na origem)'.padEnd(80) + '│');
+        } else {
+            lines.push('│  ❌ 0 REMOVIDO(S)  → Nenhum componente extra no destino'.padEnd(80) + '│');
+        }
+        
+        if (result.summary.modified > 0) {
+            lines.push(`│  ⚠️  ${result.summary.modified} DIFERENTE(S) → Existe em ambos, mas com configurações diferentes`.padEnd(80) + '│');
+            lines.push('│                        (Ação: sincronizar as diferenças)'.padEnd(80) + '│');
+        } else {
+            lines.push('│  ⚠️  0 DIFERENTE(S) → Nenhuma diferença de configuração'.padEnd(80) + '│');
+        }
+        
+        if (result.summary.unchanged > 0) {
+            lines.push(`│  ✔️  ${result.summary.unchanged} IDÊNTICO(S)  → Configuração igual em ambos os ambientes`.padEnd(80) + '│');
+        }
+        
+        lines.push('└───────────────────────────────────────────────────────────────────────────────┘');
         lines.push('');
 
         if (result.differences.length > 0) {
-            lines.push('───────────────────────────────────────────────────────────');
-            lines.push('DETALHES');
-            lines.push('───────────────────────────────────────────────────────────');
+            lines.push('┌───────────────────────────────────────────────────────────────────────────────┐');
+            lines.push('│  DETALHES DAS DIFERENÇAS                                                      │');
+            lines.push('└───────────────────────────────────────────────────────────────────────────────┘');
+            lines.push('');
 
-            for (const diff of result.differences) {
-                const statusIcon = this.getStatusIcon(diff.status);
-                lines.push(`${statusIcon} ${diff.componentName} (${diff.type})`);
-                lines.push(`   Path: ${diff.path}`);
+            const added = result.differences.filter(d => d.status === 'added');
+            const removed = result.differences.filter(d => d.status === 'removed');
+            const modified = result.differences.filter(d => d.status === 'modified');
 
-                if (diff.details && diff.details.length > 0) {
-                    for (const detail of diff.details) {
-                        lines.push(`   - ${detail.property}: ${detail.sourceValue} → ${detail.targetValue}`);
-                    }
+            if (added.length > 0) {
+                lines.push('  ┌─────────────────────────────────────────────────────────────────────────┐');
+                lines.push('  │  ✅ COMPONENTES NOVOS (existem na origem, precisam ser criados no destino)');
+                lines.push('  └─────────────────────────────────────────────────────────────────────────┘');
+                for (const diff of added) {
+                    lines.push(`     📦 ${diff.componentName}`);
+                    lines.push(`        Tipo: ${diff.type}`);
+                    lines.push(`        API Name: ${diff.path}`);
+                    lines.push('');
                 }
-
-                lines.push('');
             }
+
+            if (removed.length > 0) {
+                lines.push('  ┌─────────────────────────────────────────────────────────────────────────┐');
+                lines.push('  │  ❌ COMPONENTES EXTRAS (existem no destino, não existem na origem)');
+                lines.push('  └─────────────────────────────────────────────────────────────────────────┘');
+                for (const diff of removed) {
+                    lines.push(`     📦 ${diff.componentName}`);
+                    lines.push(`        Tipo: ${diff.type}`);
+                    lines.push(`        API Name: ${diff.path}`);
+                    lines.push('');
+                }
+            }
+
+            if (modified.length > 0) {
+                lines.push('  ┌─────────────────────────────────────────────────────────────────────────┐');
+                lines.push('  │  ⚠️  COMPONENTES COM DIFERENÇAS (existem em ambos, mas estão diferentes)');
+                lines.push('  └─────────────────────────────────────────────────────────────────────────┘');
+                for (const diff of modified) {
+                    lines.push(`     📦 ${diff.componentName}`);
+                    lines.push(`        Tipo: ${diff.type}`);
+                    lines.push(`        API Name: ${diff.path}`);
+                    lines.push('');
+                    if (diff.details && diff.details.length > 0) {
+                        lines.push('        Diferenças encontradas:');
+                        lines.push('        ┌──────────────────────────────────────────────────────────────┐');
+                        for (const detail of diff.details) {
+                            lines.push(`        │  Campo: ${detail.property}`);
+                            lines.push(`        │    🔵 Origem:  ${detail.sourceValue || '(vazio)'}`);
+                            lines.push(`        │    🟢 Destino: ${detail.targetValue || '(vazio)'}`);
+                            lines.push('        │');
+                        }
+                        lines.push('        └──────────────────────────────────────────────────────────────┘');
+                    }
+                    lines.push('');
+                }
+            }
+        } else {
+            lines.push('┌───────────────────────────────────────────────────────────────────────────────┐');
+            lines.push('│  ✅ NENHUMA DIFERENÇA ENCONTRADA                                              │');
+            lines.push('│                                                                               │');
+            lines.push('│  Os ambientes estão sincronizados para este tipo de metadado.                │');
+            lines.push('└───────────────────────────────────────────────────────────────────────────────┘');
         }
 
-        lines.push('═══════════════════════════════════════════════════════════');
+        lines.push('');
+        lines.push('═══════════════════════════════════════════════════════════════════════════════');
+        lines.push('                              FIM DO RELATÓRIO                                 ');
+        lines.push('═══════════════════════════════════════════════════════════════════════════════');
 
         return lines.join('\n');
     }
@@ -570,15 +653,15 @@ export class DiffService {
     private getStatusIcon(status: DiffItem['status']): string {
         switch (status) {
             case 'added':
-                return '[+]';
+                return '✅';
             case 'removed':
-                return '[-]';
+                return '❌';
             case 'modified':
-                return '[~]';
+                return '⚠️';
             case 'unchanged':
-                return '[=]';
+                return '✔️';
             default:
-                return '[?]';
+                return '❓';
         }
     }
 }

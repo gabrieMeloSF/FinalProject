@@ -173,22 +173,32 @@ Se você só precisa do manifest:
 
 ### Interpretando o Resultado
 
-O relatório mostra:
+O relatório mostra um resumo visual com ações sugeridas:
 
 ```
-RESUMO
-───────────────────────────────────────────────────────────
-Total de componentes: 10
-  + Adicionados: 2    ← Existem na origem, não no destino
-  - Removidos: 1      ← Existem no destino, não na origem
-  ~ Modificados: 3    ← Existem em ambos, mas diferentes
-  = Inalterados: 4    ← Idênticos em ambos
+┌───────────────────────────────────────────────────────────────────────────────┐
+│  RESUMO DA COMPARAÇÃO                                                         │
+├───────────────────────────────────────────────────────────────────────────────┤
+│  Total de componentes analisados: 10                                          │
+│                                                                               │
+│  ✅ 2 NOVO(S)       → Existe na ORIGEM, falta no DESTINO                      │
+│                        (Ação: fazer deploy para o destino)                    │
+│  ❌ 1 REMOVIDO(S)  → Existe no DESTINO, não existe na ORIGEM                  │
+│                        (Ação: remover do destino ou adicionar na origem)      │
+│  ⚠️  3 DIFERENTE(S) → Existe em ambos, mas com configurações diferentes       │
+│                        (Ação: sincronizar as diferenças)                      │
+│  ✔️  4 IDÊNTICO(S)  → Configuração igual em ambos os ambientes                │
+└───────────────────────────────────────────────────────────────────────────────┘
 ```
 
 **Detalhes das diferenças:**
-- `[+]` = Componente novo (precisa ser adicionado no destino)
-- `[-]` = Componente removido (existe só no destino)
-- `[~]` = Componente modificado (mostrar o que mudou)
+- `✅ NOVOS` = Componentes que existem na origem e precisam ser criados no destino
+- `❌ REMOVIDOS` = Componentes que existem só no destino (extras)
+- `⚠️ DIFERENTES` = Componentes com configurações distintas (mostra campo a campo)
+
+Para cada componente diferente, o relatório mostra:
+- 🔵 **Origem**: valor atual na org de origem
+- 🟢 **Destino**: valor atual na org de destino
 
 ### Usando o Diff para Deploy
 
@@ -201,13 +211,52 @@ Total de componentes: 10
 
 ## 6. Auditoria e Rastreabilidade
 
-### Visualizando o Log
+A extensão oferece duas funcionalidades de auditoria:
+- **Setup Audit Trail**: Histórico de alterações feitas no Setup do Salesforce
+- **Log Local**: Registro das operações realizadas pela extensão
 
-1. Abra a seção **Auditoria** na barra lateral
-2. Os logs são agrupados por data (Hoje, Ontem, Anteriores)
-3. Expanda uma entrada para ver detalhes
+### Setup Audit Trail (Salesforce)
 
-### Tipos de Eventos Registrados
+O Setup Audit Trail mostra todas as alterações administrativas feitas no Salesforce.
+
+#### Carregando o Audit Trail
+
+1. Execute `SF DevOps: Carregar Setup Audit Trail`
+2. Um documento formatado será aberto com o histórico
+3. A sidebar também é atualizada com os registros
+
+#### Filtrando por Seção
+
+1. Execute `SF DevOps: Filtrar Audit Trail`
+2. Selecione a seção desejada:
+   - `All` - Todas as seções
+   - `Permission Sets` - Alterações em Permission Sets
+   - `Profiles` - Alterações em Profiles
+   - `Manage Users` - Gerenciamento de usuários
+   - `Security Controls` - Controles de segurança
+   - `Customize` - Customizações
+   - etc.
+
+#### Buscando por Termo
+
+1. Execute `SF DevOps: Buscar no Audit Trail`
+2. Digite o termo de busca (nome de usuário, campo, etc.)
+3. Visualize os resultados filtrados
+
+#### Exportando o Audit Trail
+
+1. Execute `SF DevOps: Exportar Audit Trail`
+2. Escolha o formato:
+   - **Texto (.txt)** - Documento formatado para leitura
+   - **JSON (.json)** - Estrutura para processamento
+   - **CSV (.csv)** - Para abrir em planilhas (Excel, Google Sheets)
+3. O arquivo é salvo em `.sfdevops/`
+
+### Log Local da Extensão
+
+Registro das operações realizadas pela extensão.
+
+#### Tipos de Eventos Registrados
 
 | Evento | Descrição |
 |--------|-----------|
@@ -216,13 +265,15 @@ Total de componentes: 10
 | 🔍 Diff Executado | Uma comparação entre ambientes foi feita |
 | 📥 Metadados Recuperados | Metadados foram carregados da org |
 | 🔌 Org Conectada | Conexão estabelecida com uma org |
-| 🔌 Org Desconectada | Desconexão de uma org |
 
-### Exportando o Log
+#### Acessando o Log Local
 
 1. Execute `SF DevOps: Ver Log de Auditoria`
-2. Escolha **Exportar Log**
-3. Selecione o local para salvar o arquivo JSON
+2. Escolha **Log Local da Extensão**
+3. Opções disponíveis:
+   - Visualizar log formatado
+   - Exportar para arquivo
+   - Limpar log
 
 ### Gerando Mensagem de Commit
 

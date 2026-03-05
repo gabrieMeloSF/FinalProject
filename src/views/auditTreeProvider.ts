@@ -1,12 +1,13 @@
 import * as vscode from 'vscode';
-import { AuditEntry, AuditAction } from '../types';
+import { AuditEntry, AuditAction, SetupAuditTrailEntry } from '../types';
 import { auditService } from '../services/auditService';
+import { sfdxService } from '../services/sfdxService';
 import { logger } from '../utils/logger';
 
 /**
  * Tipos de itens na árvore de auditoria
  */
-type AuditTreeItemType = 'entry' | 'detail' | 'empty' | 'category';
+type AuditTreeItemType = 'entry' | 'detail' | 'empty' | 'category' | 'sfEntry' | 'sfDetail' | 'action' | 'loading';
 
 /**
  * Item da árvore de auditoria
@@ -17,6 +18,7 @@ export class AuditTreeItem extends vscode.TreeItem {
         public readonly collapsibleState: vscode.TreeItemCollapsibleState,
         public readonly itemType: AuditTreeItemType,
         public readonly entry?: AuditEntry,
+        public readonly sfEntry?: SetupAuditTrailEntry,
         public readonly detailKey?: string,
         public readonly detailValue?: string
     ) {
@@ -29,7 +31,11 @@ export class AuditTreeItem extends vscode.TreeItem {
             case 'entry':
                 this.setupEntryItem();
                 break;
+            case 'sfEntry':
+                this.setupSfEntryItem();
+                break;
             case 'detail':
+            case 'sfDetail':
                 this.setupDetailItem();
                 break;
             case 'empty':
@@ -37,6 +43,12 @@ export class AuditTreeItem extends vscode.TreeItem {
                 break;
             case 'category':
                 this.setupCategoryItem();
+                break;
+            case 'action':
+                this.setupActionItem();
+                break;
+            case 'loading':
+                this.setupLoadingItem();
                 break;
         }
     }
@@ -58,14 +70,22 @@ export class AuditTreeItem extends vscode.TreeItem {
         if (this.entry.sourceOrg) {
             this.tooltip.appendMarkdown(`- **Source Org:** ${this.entry.sourceOrg}\n`);
         }
+    }
+
+    private setupSfEntryItem(): void {
+        if (!this.sfEntry) {return;}
+
+        this.contextValue = 'sfAuditEntry';
+        this.iconPath = this.getSectionIcon(this.sfEntry.section);
         
-        if (this.entry.targetOrg) {
-            this.tooltip.appendMarkdown(`- **Target Org:** ${this.entry.targetOrg}\n`);
-        }
-        
-        if (this.entry.details.componentsCount !== undefined) {
-            this.tooltip.appendMarkdown(`- **Components:** ${this.entry.details.componentsCount}\n`);
-        }
+        this.description = this.sfEntry.createdDate.toLocaleTimeString('pt-BR');
+
+        this.tooltip = new vscode.MarkdownString();
+        this.tooltip.appendMarkdown(`**${this.sfEntry.section}**\n\n`);
+        this.tooltip.appendMarkdown(`- **Ação:** ${this.sfEntry.action}\n`);
+        this.tooltip.appendMarkdown(`- **Data:** ${this.sfEntry.createdDate.toLocaleString('pt-BR')}\n`);
+        this.tooltip.appendMarkdown(`- **Usuário:** ${this.sfEntry.createdByName}\n`);
+        this.tooltip.appendMarkdown(`\n---\n\n${this.sfEntry.display}`);
     }
 
     private setupDetailItem(): void {
@@ -80,8 +100,40 @@ export class AuditTreeItem extends vscode.TreeItem {
     }
 
     private setupCategoryItem(): void {
-        this.iconPath = new vscode.ThemeIcon('folder');
+        this.iconPath = new vscode.ThemeIcon('calendar');
         this.contextValue = 'auditCategory';
+    }
+
+    private setupActionItem(): void {
+        this.iconPath = new vscode.ThemeIcon('play');
+        this.contextValue = 'auditAction';
+    }
+
+    private setupLoadingItem(): void {
+        this.iconPath = new vscode.ThemeIcon('loading~spin');
+        this.contextValue = 'loading';
+    }
+
+    private getSectionIcon(section: string): vscode.ThemeIcon {
+        const sectionLower = section.toLowerCase();
+        
+        if (sectionLower.includes('permission')) {
+            return new vscode.ThemeIcon('shield', new vscode.ThemeColor('charts.purple'));
+        } else if (sectionLower.includes('profile')) {
+            return new vscode.ThemeIcon('person', new vscode.ThemeColor('charts.blue'));
+        } else if (sectionLower.includes('user')) {
+            return new vscode.ThemeIcon('account', new vscode.ThemeColor('charts.green'));
+        } else if (sectionLower.includes('object') || sectionLower.includes('field')) {
+            return new vscode.ThemeIcon('database', new vscode.ThemeColor('charts.orange'));
+        } else if (sectionLower.includes('apex') || sectionLower.includes('class')) {
+            return new vscode.ThemeIcon('code', new vscode.ThemeColor('charts.yellow'));
+        } else if (sectionLower.includes('flow') || sectionLower.includes('process')) {
+            return new vscode.ThemeIcon('workflow', new vscode.ThemeColor('charts.red'));
+        } else if (sectionLower.includes('security')) {
+            return new vscode.ThemeIcon('lock', new vscode.ThemeColor('charts.red'));
+        } else {
+            return new vscode.ThemeIcon('history', new vscode.ThemeColor('charts.gray'));
+        }
     }
 
     private getActionIcon(action: AuditAction): vscode.ThemeIcon {
@@ -135,13 +187,13 @@ export class AuditTreeItem extends vscode.TreeItem {
         } else if (days < 7) {
             return `${days}d atrás`;
         } else {
-            return date.toLocaleDateString();
+            return date.toLocaleDateString('pt-BR');
         }
     }
 }
 
 /**
- * Provider da árvore de auditoria
+ * Provider da árvore de auditoria - Setup Audit Trail do Salesforce
  */
 export class AuditTreeProvider implements vscode.TreeDataProvider<AuditTreeItem> {
     private _onDidChangeTreeData: vscode.EventEmitter<AuditTreeItem | undefined | null | void> = 
@@ -149,11 +201,61 @@ export class AuditTreeProvider implements vscode.TreeDataProvider<AuditTreeItem>
     readonly onDidChangeTreeData: vscode.Event<AuditTreeItem | undefined | null | void> = 
         this._onDidChangeTreeData.event;
 
+    private isLoading = false;
+    private currentFilter: string = 'All';
+    private sfAuditTrailEntries: SetupAuditTrailEntry[] = [];
+
     /**
      * Atualiza a árvore
      */
     public refresh(): void {
         this._onDidChangeTreeData.fire();
+    }
+
+    /**
+     * Busca o Audit Trail do Salesforce
+     */
+    public async fetchAuditTrail(): Promise<void> {
+        const org = sfdxService.getCurrentOrg();
+        if (!org) {
+            vscode.window.showWarningMessage('Conecte-se a uma org para ver o Setup Audit Trail');
+            return;
+        }
+
+        this.isLoading = true;
+        this.refresh();
+
+        try {
+            const filter = this.currentFilter !== 'All' ? { section: this.currentFilter } : undefined;
+            const result = await auditService.fetchSetupAuditTrail(filter);
+            
+            if (result.success && result.data) {
+                this.sfAuditTrailEntries = result.data;
+                vscode.window.showInformationMessage(`${result.data.length} registros do Audit Trail carregados`);
+            } else {
+                vscode.window.showErrorMessage(`Erro ao carregar Audit Trail: ${result.error}`);
+            }
+        } catch (error) {
+            logger.error('Erro ao buscar Audit Trail', error);
+        } finally {
+            this.isLoading = false;
+            this.refresh();
+        }
+    }
+
+    /**
+     * Define o filtro de seção
+     */
+    public setFilter(section: string): void {
+        this.currentFilter = section;
+        this.fetchAuditTrail();
+    }
+
+    /**
+     * Obtém o filtro atual
+     */
+    public getFilter(): string {
+        return this.currentFilter;
     }
 
     getTreeItem(element: AuditTreeItem): vscode.TreeItem {
@@ -165,208 +267,220 @@ export class AuditTreeProvider implements vscode.TreeDataProvider<AuditTreeItem>
             return this.getRootItems();
         }
 
-        if (element.itemType === 'entry' && element.entry) {
-            return this.getEntryDetails(element.entry);
+        if (element.itemType === 'sfEntry' && element.sfEntry) {
+            return this.getSfEntryDetails(element.sfEntry);
+        }
+
+        if (element.itemType === 'category') {
+            return this.getCategoryEntries(element.label);
         }
 
         return [];
     }
 
     /**
-     * Obtém os itens raiz (entradas recentes)
+     * Obtém os itens raiz
      */
     private getRootItems(): AuditTreeItem[] {
-        const entries = auditService.getRecentEntries(20);
         const items: AuditTreeItem[] = [];
+        const org = sfdxService.getCurrentOrg();
 
-        if (entries.length === 0) {
+        // Se não há org conectada
+        if (!org) {
             items.push(new AuditTreeItem(
-                'Nenhuma entrada de auditoria',
+                'Conecte-se a uma org',
                 vscode.TreeItemCollapsibleState.None,
                 'empty'
             ));
-            
-            const helpItem = new AuditTreeItem(
-                'As ações serão registradas aqui',
-                vscode.TreeItemCollapsibleState.None,
-                'empty'
-            );
-            helpItem.iconPath = new vscode.ThemeIcon('lightbulb');
-            items.push(helpItem);
-            
             return items;
         }
 
-        // Agrupa por dia
-        const today = new Date();
-        today.setHours(0, 0, 0, 0);
-        
-        const yesterday = new Date(today);
-        yesterday.setDate(yesterday.getDate() - 1);
-
-        const todayEntries = entries.filter(e => e.timestamp >= today);
-        const yesterdayEntries = entries.filter(e => e.timestamp >= yesterday && e.timestamp < today);
-        const olderEntries = entries.filter(e => e.timestamp < yesterday);
-
-        if (todayEntries.length > 0) {
+        // Se está carregando
+        if (this.isLoading) {
             items.push(new AuditTreeItem(
-                `Hoje (${todayEntries.length})`,
-                vscode.TreeItemCollapsibleState.Expanded,
-                'category'
+                'Carregando Audit Trail...',
+                vscode.TreeItemCollapsibleState.None,
+                'loading'
             ));
-            
-            for (const entry of todayEntries) {
-                items.push(new AuditTreeItem(
-                    this.getActionLabel(entry.action),
-                    vscode.TreeItemCollapsibleState.Collapsed,
-                    'entry',
-                    entry
-                ));
-            }
+            return items;
         }
 
-        if (yesterdayEntries.length > 0) {
+        // Ação: Carregar/Atualizar
+        const loadItem = new AuditTreeItem(
+            '⟳ Carregar Setup Audit Trail',
+            vscode.TreeItemCollapsibleState.None,
+            'action'
+        );
+        loadItem.command = {
+            command: 'sfdevops.refreshAuditTrail',
+            title: 'Carregar Audit Trail'
+        };
+        loadItem.iconPath = new vscode.ThemeIcon('refresh');
+        items.push(loadItem);
+
+        // Se não há entradas
+        if (this.sfAuditTrailEntries.length === 0) {
             items.push(new AuditTreeItem(
-                `Ontem (${yesterdayEntries.length})`,
-                vscode.TreeItemCollapsibleState.Collapsed,
-                'category'
+                'Clique acima para carregar',
+                vscode.TreeItemCollapsibleState.None,
+                'empty'
             ));
-            
-            for (const entry of yesterdayEntries) {
-                items.push(new AuditTreeItem(
-                    this.getActionLabel(entry.action),
-                    vscode.TreeItemCollapsibleState.Collapsed,
-                    'entry',
-                    entry
-                ));
-            }
+            return items;
         }
 
-        if (olderEntries.length > 0) {
-            items.push(new AuditTreeItem(
-                `Anteriores (${olderEntries.length})`,
+        // Info do filtro atual
+        const filterItem = new AuditTreeItem(
+            `Filtro: ${this.currentFilter}`,
+            vscode.TreeItemCollapsibleState.None,
+            'empty'
+        );
+        filterItem.iconPath = new vscode.ThemeIcon('filter');
+        filterItem.command = {
+            command: 'sfdevops.filterAuditTrail',
+            title: 'Filtrar'
+        };
+        items.push(filterItem);
+
+        // Info de última atualização
+        const lastFetch = auditService.getSetupAuditTrailLastFetch();
+        if (lastFetch) {
+            const infoItem = new AuditTreeItem(
+                `${this.sfAuditTrailEntries.length} registros`,
+                vscode.TreeItemCollapsibleState.None,
+                'empty'
+            );
+            infoItem.description = `atualizado ${lastFetch.toLocaleTimeString('pt-BR')}`;
+            infoItem.iconPath = new vscode.ThemeIcon('info');
+            items.push(infoItem);
+        }
+
+        // Agrupa por data
+        const byDate = new Map<string, SetupAuditTrailEntry[]>();
+        for (const entry of this.sfAuditTrailEntries) {
+            const dateKey = entry.createdDate.toLocaleDateString('pt-BR');
+            if (!byDate.has(dateKey)) {
+                byDate.set(dateKey, []);
+            }
+            byDate.get(dateKey)!.push(entry);
+        }
+
+        // Cria categorias por data
+        for (const [date, entries] of byDate) {
+            const categoryItem = new AuditTreeItem(
+                `📅 ${date} (${entries.length})`,
                 vscode.TreeItemCollapsibleState.Collapsed,
                 'category'
-            ));
-            
-            for (const entry of olderEntries) {
-                items.push(new AuditTreeItem(
-                    this.getActionLabel(entry.action),
-                    vscode.TreeItemCollapsibleState.Collapsed,
-                    'entry',
-                    entry
-                ));
-            }
+            );
+            items.push(categoryItem);
         }
 
         return items;
     }
 
     /**
-     * Obtém os detalhes de uma entrada
+     * Obtém as entradas de uma categoria (data)
      */
-    private getEntryDetails(entry: AuditEntry): AuditTreeItem[] {
+    private getCategoryEntries(categoryLabel: string): AuditTreeItem[] {
         const items: AuditTreeItem[] = [];
+        
+        // Extrai a data do label (formato: "📅 DD/MM/YYYY (N)")
+        const dateMatch = categoryLabel.match(/(\d{2}\/\d{2}\/\d{4})/);
+        if (!dateMatch) return items;
 
-        items.push(new AuditTreeItem(
-            'Usuário',
-            vscode.TreeItemCollapsibleState.None,
-            'detail',
-            entry,
-            'Usuário',
-            entry.user
-        ));
+        const dateStr = dateMatch[1];
+        
+        const entries = this.sfAuditTrailEntries.filter(entry => {
+            return entry.createdDate.toLocaleDateString('pt-BR') === dateStr;
+        });
 
-        items.push(new AuditTreeItem(
-            'Data/Hora',
-            vscode.TreeItemCollapsibleState.None,
-            'detail',
-            entry,
-            'Data/Hora',
-            entry.timestamp.toLocaleString()
-        ));
-
-        if (entry.sourceOrg) {
+        for (const entry of entries) {
+            const displayText = entry.display.length > 60 
+                ? entry.display.substring(0, 57) + '...' 
+                : entry.display;
+            
             items.push(new AuditTreeItem(
-                'Org Origem',
-                vscode.TreeItemCollapsibleState.None,
-                'detail',
-                entry,
-                'Org Origem',
-                entry.sourceOrg
-            ));
-        }
-
-        if (entry.targetOrg) {
-            items.push(new AuditTreeItem(
-                'Org Destino',
-                vscode.TreeItemCollapsibleState.None,
-                'detail',
-                entry,
-                'Org Destino',
-                entry.targetOrg
-            ));
-        }
-
-        if (entry.details.componentsCount !== undefined) {
-            items.push(new AuditTreeItem(
-                'Componentes',
-                vscode.TreeItemCollapsibleState.None,
-                'detail',
-                entry,
-                'Componentes',
-                String(entry.details.componentsCount)
-            ));
-        }
-
-        if (entry.details.componentTypes && entry.details.componentTypes.length > 0) {
-            items.push(new AuditTreeItem(
-                'Tipos',
-                vscode.TreeItemCollapsibleState.None,
-                'detail',
-                entry,
-                'Tipos',
-                entry.details.componentTypes.join(', ')
-            ));
-        }
-
-        if (entry.details.packagePath) {
-            items.push(new AuditTreeItem(
-                'Pacote',
-                vscode.TreeItemCollapsibleState.None,
-                'detail',
-                entry,
-                'Pacote',
-                entry.details.packagePath
-            ));
-        }
-
-        if (entry.details.diffSummary) {
-            const s = entry.details.diffSummary;
-            items.push(new AuditTreeItem(
-                'Resultado Diff',
-                vscode.TreeItemCollapsibleState.None,
-                'detail',
-                entry,
-                'Resultado',
-                `+${s.added} -${s.removed} ~${s.modified}`
+                displayText,
+                vscode.TreeItemCollapsibleState.Collapsed,
+                'sfEntry',
+                undefined,
+                entry
             ));
         }
 
         return items;
     }
 
-    private getActionLabel(action: AuditAction): string {
-        const labels: Record<AuditAction, string> = {
-            'PACKAGE_CREATED': 'Pacote Criado',
-            'PACKAGE_EXPORTED': 'Pacote Exportado',
-            'DIFF_EXECUTED': 'Diff Executado',
-            'METADATA_RETRIEVED': 'Metadados Recuperados',
-            'SELECTION_UPDATED': 'Seleção Atualizada',
-            'ORG_CONNECTED': 'Org Conectada',
-            'ORG_DISCONNECTED': 'Org Desconectada',
-        };
+    /**
+     * Obtém os detalhes de uma entrada do Salesforce
+     */
+    private getSfEntryDetails(entry: SetupAuditTrailEntry): AuditTreeItem[] {
+        const items: AuditTreeItem[] = [];
 
-        return labels[action] || action;
+        items.push(new AuditTreeItem(
+            'Usuário',
+            vscode.TreeItemCollapsibleState.None,
+            'sfDetail',
+            undefined,
+            entry,
+            'Usuário',
+            entry.createdByName
+        ));
+
+        items.push(new AuditTreeItem(
+            'Data/Hora',
+            vscode.TreeItemCollapsibleState.None,
+            'sfDetail',
+            undefined,
+            entry,
+            'Data/Hora',
+            entry.createdDate.toLocaleString('pt-BR')
+        ));
+
+        items.push(new AuditTreeItem(
+            'Seção',
+            vscode.TreeItemCollapsibleState.None,
+            'sfDetail',
+            undefined,
+            entry,
+            'Seção',
+            entry.section
+        ));
+
+        items.push(new AuditTreeItem(
+            'Ação',
+            vscode.TreeItemCollapsibleState.None,
+            'sfDetail',
+            undefined,
+            entry,
+            'Ação',
+            entry.action
+        ));
+
+        // Descrição completa
+        const descItem = new AuditTreeItem(
+            'Descrição',
+            vscode.TreeItemCollapsibleState.None,
+            'sfDetail',
+            undefined,
+            entry,
+            'Descrição',
+            entry.display
+        );
+        descItem.tooltip = entry.display;
+        items.push(descItem);
+
+        if (entry.delegateUser) {
+            items.push(new AuditTreeItem(
+                'Delegado',
+                vscode.TreeItemCollapsibleState.None,
+                'sfDetail',
+                undefined,
+                entry,
+                'Delegado',
+                entry.delegateUser
+            ));
+        }
+
+        return items;
     }
 }
