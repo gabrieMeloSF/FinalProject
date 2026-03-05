@@ -67,8 +67,8 @@ Reduzir a complexidade operacional, evitar erros humanos e padronizar o processo
 
 1. Clone o repositório:
    ```bash
-   git clone https://github.com/seu-usuario/salesforce-devops-assistant.git
-   cd salesforce-devops-assistant
+   git clone https://github.com/gabrieMeloSF/FinalProject.git
+   cd FinalProject
    ```
 
 2. Instale as dependências:
