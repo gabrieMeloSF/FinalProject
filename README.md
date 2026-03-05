@@ -44,9 +44,12 @@ Reduzir a complexidade operacional, evitar erros humanos e padronizar o processo
 - Relatório estruturado das divergências
 
 ### 📝 Auditoria e Rastreabilidade
-- Log de todas as operações realizadas
-- Data/hora, usuário e org de cada ação
-- Metadados incluídos em cada pacote
+- **Setup Audit Trail** - Histórico de alterações do Salesforce
+  - Visualização do Audit Trail direto no VS Code
+  - Filtro por seção (Permission Sets, Profiles, Users, etc.)
+  - Busca por termo
+  - Exportação em TXT, JSON ou CSV
+- Log local de operações da extensão
 - Sugestão automática de mensagem de commit
 
 ## 🛠️ Instalação
@@ -136,7 +139,11 @@ Reduzir a complexidade operacional, evitar erros humanos e padronizar o processo
 | `SF DevOps: Criar Pacote de Deploy` | Gera o pacote com a seleção atual |
 | `SF DevOps: Gerar package.xml` | Gera apenas o package.xml |
 | `SF DevOps: Comparar Metadados` | Executa diff entre ambientes |
-| `SF DevOps: Ver Log de Auditoria` | Visualiza histórico de operações |
+| `SF DevOps: Ver Log de Auditoria` | Menu de opções de auditoria |
+| `SF DevOps: Carregar Setup Audit Trail` | Busca histórico de alterações do Salesforce |
+| `SF DevOps: Filtrar Audit Trail` | Filtra por seção do Setup |
+| `SF DevOps: Buscar no Audit Trail` | Busca por termo no histórico |
+| `SF DevOps: Exportar Audit Trail` | Exporta em TXT, JSON ou CSV |
 | `SF DevOps: Gerar Mensagem de Commit` | Cria sugestão de commit message |
 
 ## 🏗️ Arquitetura
@@ -181,6 +188,8 @@ Esta extensão **não**:
 
 ## 🚧 Roadmap
 
+- [x] Setup Audit Trail do Salesforce
+- [x] Relatório de Diff aprimorado
 - [ ] Integração com pipelines CI/CD
 - [ ] Análise de impacto de deploy
 - [ ] Templates de governança

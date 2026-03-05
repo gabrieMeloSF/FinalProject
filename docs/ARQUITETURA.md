@@ -484,6 +484,10 @@
 │                           Audit Model                                        │
 └─────────────────────────────────────────────────────────────────────────────┘
 
+┌─────────────────────────────────────────────────────────────────────────────┐
+│                    LOG LOCAL (Operações da Extensão)                         │
+└─────────────────────────────────────────────────────────────────────────────┘
+
 ┌─────────────────────┐         ┌─────────────────────┐
 │     AuditLog        │ 1     * │    AuditEntry       │
 ├─────────────────────┤─────────├─────────────────────┤
@@ -508,6 +512,41 @@
                         │ + diffSummary       │
                         │ + additionalInfo    │
                         └─────────────────────┘
+
+
+┌─────────────────────────────────────────────────────────────────────────────┐
+│                 SETUP AUDIT TRAIL (Histórico do Salesforce)                  │
+└─────────────────────────────────────────────────────────────────────────────┘
+
+┌───────────────────────────┐         ┌───────────────────────────┐
+│   AuditTrailFilter        │         │  SetupAuditTrailEntry     │
+├───────────────────────────┤         ├───────────────────────────┤
+│ + section?: string        │         │ + id: string              │
+│ + userId?: string         │         │ + action: string          │
+│ + dateFrom?: Date         │         │ + section: string         │
+│ + dateTo?: Date           │         │ + display: string         │
+│ + searchTerm?: string     │         │ + createdDate: Date       │
+│ + limit?: number          │         │ + createdById: string     │
+└───────────────────────────┘         │ + createdByName: string   │
+                                      │ + delegateUser?: string   │
+                                      └───────────────────────────┘
+
+SOQL Query:
+┌─────────────────────────────────────────────────────────────────────────────┐
+│  SELECT Id, Action, Section, Display, CreatedDate,                          │
+│         CreatedById, CreatedBy.Name, DelegateUser                           │
+│  FROM SetupAuditTrail                                                       │
+│  ORDER BY CreatedDate DESC LIMIT 200                                        │
+└─────────────────────────────────────────────────────────────────────────────┘
+
+Formatos de Exportação:
+┌────────────┬──────────┬─────────────────────────────────────┐
+│  Formato   │ Extensão │ Uso                                 │
+├────────────┼──────────┼─────────────────────────────────────┤
+│  Texto     │  .txt    │ Documento formatado para leitura    │
+│  JSON      │  .json   │ Estrutura para processamento        │
+│  CSV       │  .csv    │ Planilhas (Excel, Google Sheets)    │
+└────────────┴──────────┴─────────────────────────────────────┘
 ```
 
 ---
